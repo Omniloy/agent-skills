@@ -1,0 +1,2221 @@
+{
+  "meta": {
+    "title": "SonIA — Asistente virtual multicanal para SUMA Gestión Tributaria",
+    "subtitle": "Plan de implementación (RAG razonado sin vectores · deep agents · PageIndex) — repo Omniloy/SonIA",
+    "source": "~/Downloads/Memoria_tecnica_SUMA.docx (Expte. 2/PA/SER/26)",
+    "repo": "Omniloy/SonIA",
+    "generated": "2026-06-20"
+  },
+  "labels": [
+    {
+      "name": "epic",
+      "color": "6f42c1",
+      "description": "Tracks a body of work with sub-issues"
+    },
+    {
+      "name": "phase-1",
+      "color": "0e8a16",
+      "description": "Fase 1 — Planificación y conocimiento (7 sem)"
+    },
+    {
+      "name": "phase-2",
+      "color": "1d76db",
+      "description": "Fase 2 — Entrenamiento y uso interno (6 sem)"
+    },
+    {
+      "name": "phase-3",
+      "color": "d93f0b",
+      "description": "Fase 3 — Piloto y despliegue (4 sem)"
+    },
+    {
+      "name": "phase-support",
+      "color": "5319e7",
+      "description": "Soporte post-implantación (12 sem)"
+    },
+    {
+      "name": "moscow:must",
+      "color": "b60205",
+      "description": "Imprescindible"
+    },
+    {
+      "name": "moscow:should",
+      "color": "fbca04",
+      "description": "Alto valor"
+    },
+    {
+      "name": "moscow:could",
+      "color": "c2e0c6",
+      "description": "Si procede"
+    },
+    {
+      "name": "area:intake",
+      "color": "0052cc",
+      "description": "Ingesta y estructuración del corpus (PageIndex)"
+    },
+    {
+      "name": "area:rag",
+      "color": "1d76db",
+      "description": "Núcleo RAG razonado / deep agent"
+    },
+    {
+      "name": "area:nlp",
+      "color": "5319e7",
+      "description": "NLP: intención, reescritura, tesauro, multilingüe"
+    },
+    {
+      "name": "area:eval",
+      "color": "0e8a16",
+      "description": "Evaluación, golden set, LLM-as-judge, gating"
+    },
+    {
+      "name": "area:channels",
+      "color": "006b75",
+      "description": "Canales: web, chat, voz, correo"
+    },
+    {
+      "name": "area:frontend",
+      "color": "bfd4f2",
+      "description": "UI embebible / accesibilidad"
+    },
+    {
+      "name": "area:infra",
+      "color": "5319e7",
+      "description": "Infra, contenedores, K8s, IaC, autoescalado"
+    },
+    {
+      "name": "area:security",
+      "color": "b60205",
+      "description": "Seguridad, ENS/ENI/RGPD, identidades, auditoría"
+    },
+    {
+      "name": "area:observability",
+      "color": "fbca04",
+      "description": "Observabilidad y monitorización (Langfuse/Grafana)"
+    },
+    {
+      "name": "area:data",
+      "color": "c5def5",
+      "description": "Persistencia, PostgreSQL, RLS, versionado del corpus"
+    },
+    {
+      "name": "area:automation",
+      "color": "d4c5f9",
+      "description": "Automatización supervisada y aprendizaje"
+    },
+    {
+      "name": "area:docs",
+      "color": "bfdadc",
+      "description": "Documentación, manuales, formación"
+    },
+    {
+      "name": "type:feature",
+      "color": "a2eeef",
+      "description": "Nueva capacidad"
+    },
+    {
+      "name": "type:infra",
+      "color": "c5def5",
+      "description": "Infraestructura / plataforma"
+    },
+    {
+      "name": "type:spike",
+      "color": "d876e3",
+      "description": "Investigación / decisión"
+    },
+    {
+      "name": "type:test",
+      "color": "0e8a16",
+      "description": "Pruebas / QA"
+    },
+    {
+      "name": "type:docs",
+      "color": "bfdadc",
+      "description": "Documentación"
+    }
+  ],
+  "milestones": [
+    {
+      "title": "Fase 1 — Planificación y conocimiento",
+      "description": "7 sem (−1): requisitos, estructuración del Texto Refundido (árbol/PageIndex), selección de modelos, arquitectura y seguridad. Entregables: plan de proyecto; documentación técnica inicial."
+    },
+    {
+      "title": "Fase 2 — Entrenamiento y uso interno",
+      "description": "6 sem (−1): indexación, fine-tuning (incl. valenciano), canales web/chat/voz, automatización, integración y seguridad. Entregable: asistente operativo (uso interno) + pruebas."
+    },
+    {
+      "title": "Fase 3 — Piloto y despliegue",
+      "description": "4 sem (−1): piloto controlado, formación (30 jornadas), demostración funcional, entrega. Entregables: informe de pruebas; manuales; entrega final."
+    },
+    {
+      "title": "Soporte post-implantación",
+      "description": "12 sem: asistencia ≤4 h, actualización de modelos, mejora continua, 1 jornada presencial/sem."
+    }
+  ],
+  "overview_blocks": [
+    {
+      "type": "callout",
+      "tone": "info",
+      "title": "Qué construimos",
+      "body_md": "**SonIA** es un asistente virtual multicanal para **SUMA Gestión Tributaria** cuyo núcleo es un **RAG razonado y sin vectores (PageIndex)**: en lugar de trocear y buscar por similitud, construye un **árbol jerárquico** del «Texto Refundido» (~800 págs.) y razona sobre él mediante **tree-search**, devolviendo respuestas **verificables** con cita exacta a documento, apartado y página.\n\nLa orquestación es un **deep agent** (LangChain **deepagents** sobre LangGraph) que planifica, recupera, verifica la fundamentación y, si no hay fuente, **se abstiene**. El repo destino `Omniloy/SonIA` parte de cero; el backend de recuperación reutiliza y extiende el servicio FastAPI ya existente en `Omniloy/pageindexomniloy`."
+    },
+    {
+      "type": "callout",
+      "tone": "decision",
+      "title": "Decisiones de arquitectura (ground truth de la investigación)",
+      "body_md": "- **Spine de orquestación:** `deepagents.create_deep_agent(...)` → compila a un LangGraph `CompiledStateGraph` (planner `write_todos`, filesystem virtual, sub-agents vía `task`, HITL por `interrupt_on`, checkpointer Postgres).\n- **Recuperación:** se **extiende** `pageindexomniloy` (no se reescribe). El `tree_builder` y los modelos `TreeNode` se reutilizan tal cual; se sustituye `store/memory.py` → `store/postgres.py` (mismo `Store` Protocol) y se añade ingesta **.docx** + **VLM**.\n- **Modelos (Fase 1):** **OpenAI** vía `init_chat_model` (capa OpenAI-compatible, opcionalmente LiteLLM). El modelo open-weights autoalojado (**vLLM/Qwen3.6-27B** + fine-tuning, FP8/MTP) y el despliegue productivo (K8s/IaC/autoescalado, on-premise) se abordan en una **fase posterior**.\n- **Despliegue (Fase 1):** el agente corre en un **contenedor Docker**; el despliegue productivo en Kubernetes/Azure EEE es **evolución**.\n- **Datos:** **PostgreSQL + pgvector** con **RLS** por tenant/rol; identidades **Keycloak (OIDC)**; trazas **Langfuse** (auto-hospedado, EEE).\n- **La cita la rellena el sistema, no el LLM** (rango de página del nodo del árbol) → páginas fabricadas son estructuralmente imposibles."
+    },
+    {
+      "type": "image",
+      "title": "Figura 1 — RAG vectorial vs RAG razonado sin vectores",
+      "src": "assets/fig1-rag-comparison.png",
+      "caption": "El troceado+embeddings pierde estructura y trazabilidad; el árbol + tree-search conserva jerarquía y cita a página."
+    },
+    {
+      "type": "image",
+      "title": "Figura 3 — Del documento al árbol jerárquico y al razonamiento del modelo",
+      "src": "assets/fig3-vectorless-arch.png"
+    },
+    {
+      "type": "diagram",
+      "title": "Máquina de estados del deep agent (LangGraph · deepagents)",
+      "caption": "Flujo planificar → recuperar (tree-search) → componer → verificar → citar / abstenerse. Cada caja es un nodo; los rombos son routers condicionales.",
+      "html": "<div class=\"diagram-panel\"><div class=\"diagram-label\">1 · Comprensión de la consulta</div><div class=\"diagram-row\"><div class=\"diagram-node\">Consulta ES / VAL / EN</div><div class=\"diagram-arrow\">→</div><div class=\"diagram-node\">language_id</div><div class=\"diagram-arrow\">→</div><div class=\"diagram-box\">intent_router</div><div class=\"diagram-pill\">chitchat/oos → respuesta canónica</div></div><div class=\"diagram-row\"><div class=\"diagram-muted\">tax_query ↓</div></div><div class=\"diagram-row\"><div class=\"diagram-node\">coref + query_rewrite</div><div class=\"diagram-arrow\">→</div><div class=\"diagram-node\">thesaurus_expand</div></div></div><div class=\"diagram-panel\"><div class=\"diagram-label\">2 · Recuperación razonada (tree-search sobre PageIndex)</div><div class=\"diagram-row\"><div class=\"diagram-box\">complexity_gate</div><div class=\"diagram-pill\">simple → tree_search</div><div class=\"diagram-pill\">compleja → decompose → map(tree_search)</div><div class=\"diagram-arrow\">→</div><div class=\"diagram-node\">evidence_ledger</div></div></div><div class=\"diagram-panel\"><div class=\"diagram-label\">3 · Composición, verificación y cita</div><div class=\"diagram-row\"><div class=\"diagram-node\">answer_compose</div><div class=\"diagram-arrow\">→</div><div class=\"diagram-box\">groundedness_verify</div><div class=\"diagram-pill\">falla → repara (≤N)</div><div class=\"diagram-pill\">sin fuente → abstain</div></div><div class=\"diagram-row\"><div class=\"diagram-muted\">pasa →</div><div class=\"diagram-node\">citation_format</div><div class=\"diagram-arrow\">→</div><div class=\"diagram-node\">cache validado</div><div class=\"diagram-arrow\">→</div><div class=\"diagram-node\">Respuesta verificable + cita</div></div></div>"
+    },
+    {
+      "type": "image",
+      "title": "Figura 6 — Interfaz del asistente: respuesta verificable, idioma, voz y valoración",
+      "src": "assets/fig6-chat-ui.png"
+    },
+    {
+      "type": "image",
+      "title": "Figura 4 — Respuesta verificable con cita exacta (documento · apartado · página)",
+      "src": "assets/fig4-verifiable-answer.png"
+    },
+    {
+      "type": "image",
+      "title": "Figura 7 — Consola de administración · Cuadro de mando (uso, calidad, idiomas, determinismo)",
+      "src": "assets/fig7-ops-dashboard.png"
+    },
+    {
+      "type": "image",
+      "title": "Figura 8 — Consola · Gestión documental (versionado, indexación, multimodal)",
+      "src": "assets/fig8-doc-management.png"
+    },
+    {
+      "type": "image",
+      "title": "Figura 9 — Consola · Aprendizaje supervisado (cola Nueva → Validada → Resuelta)",
+      "src": "assets/fig9-supervised-learning.png"
+    },
+    {
+      "type": "image",
+      "title": "Figura 5 — Despliegue híbrido con autoescalado elástico (Azure EEE, portable on-premise)",
+      "src": "assets/fig5-hybrid-deploy.png"
+    },
+    {
+      "type": "table",
+      "title": "Inventario de herramientas del deep agent (deepagents tools)",
+      "columns": [
+        "Tool",
+        "Propósito",
+        "Respaldado por",
+        "HITL"
+      ],
+      "rows": [
+        [
+          "get_collection_structure",
+          "Árbol ToC combinado de la colección (entrada al tree-search)",
+          "pageindex GET /collections/{id}/structure",
+          "—"
+        ],
+        [
+          "get_document_structure",
+          "Drill-down en el árbol de un documento",
+          "pageindex GET …/documents/{id}/structure",
+          "—"
+        ],
+        [
+          "get_page_content",
+          "Texto verbatim de la página/rango convergido (evidencia)",
+          "pageindex GET …/documents/{id}/pages",
+          "—"
+        ],
+        [
+          "thesaurus_lookup / expand_query",
+          "Normaliza jerga fiscal a término canónico + expande",
+          "PostgreSQL tesauro (pg_trgm)",
+          "—"
+        ],
+        [
+          "rewrite_and_decompose_query",
+          "Normaliza y descompone consultas multi-salto",
+          "LLM (Qwen via LiteLLM)",
+          "—"
+        ],
+        [
+          "detect_language",
+          "Clasifica es/va/en para ruta y voz",
+          "fastText/lingua o LLM",
+          "—"
+        ],
+        [
+          "verify_groundedness",
+          "Comprueba que cada claim se apoya en la fuente",
+          "LLM-as-judge (mismo rubric que eval)",
+          "—"
+        ],
+        [
+          "record_citation / abstain",
+          "Acumula citas exactas / abstención controlada",
+          "estado deepagents (Command)",
+          "—"
+        ],
+        [
+          "escalate_to_human_agent",
+          "Escalado de chat en vivo a agente humano",
+          "servicio live-chat (WSS)",
+          "✔ interrupt_on"
+        ],
+        [
+          "ingest/update/delete_document, manage_collection",
+          "Acciones de gestión documental",
+          "pageindex CRUD documentos/colecciones",
+          "✔ interrupt_on"
+        ],
+        [
+          "submit_feedback",
+          "Bucle de aprendizaje supervisado / instant learning",
+          "PostgreSQL feedback + dataset Langfuse",
+          "—"
+        ],
+        [
+          "run_automation_action",
+          "Paso de trámite administrativo automatizado",
+          "integración back-office SUMA",
+          "✔ interrupt_on"
+        ]
+      ]
+    },
+    {
+      "type": "data-model",
+      "title": "Modelo de datos núcleo (PostgreSQL + pgvector, RLS por tenant)",
+      "entities": [
+        {
+          "name": "collections",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "pk": true
+            },
+            {
+              "name": "tenant_id",
+              "type": "uuid",
+              "note": "RLS app.current_tenant"
+            },
+            {
+              "name": "title",
+              "type": "text"
+            },
+            {
+              "name": "description",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "documents",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "pk": true
+            },
+            {
+              "name": "collection_id",
+              "type": "uuid",
+              "fk": "collections.id"
+            },
+            {
+              "name": "doc_name",
+              "type": "text"
+            },
+            {
+              "name": "language",
+              "type": "text",
+              "note": "es | va | en"
+            },
+            {
+              "name": "format",
+              "type": "text",
+              "note": "docx | pdf | md"
+            },
+            {
+              "name": "corpus_version",
+              "type": "int",
+              "note": "incremental re-index"
+            },
+            {
+              "name": "content_hash",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "tree_nodes",
+          "fields": [
+            {
+              "name": "node_id",
+              "type": "text",
+              "pk": true
+            },
+            {
+              "name": "document_id",
+              "type": "uuid",
+              "fk": "documents.id"
+            },
+            {
+              "name": "title",
+              "type": "text"
+            },
+            {
+              "name": "summary",
+              "type": "text"
+            },
+            {
+              "name": "section_path",
+              "type": "text",
+              "note": "Título→Cap→Art"
+            },
+            {
+              "name": "start_page",
+              "type": "int"
+            },
+            {
+              "name": "end_page",
+              "type": "int"
+            },
+            {
+              "name": "embedding",
+              "type": "vector(1024)",
+              "note": "BGE-M3, híbrido opcional"
+            }
+          ]
+        },
+        {
+          "name": "thesaurus_concept",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "pk": true
+            },
+            {
+              "name": "canonical_term",
+              "type": "text",
+              "note": "IIVTNU"
+            },
+            {
+              "name": "preferred_label",
+              "type": "text"
+            },
+            {
+              "name": "concept_type",
+              "type": "text"
+            },
+            {
+              "name": "authority_node",
+              "type": "text",
+              "fk": "tree_nodes.node_id"
+            }
+          ]
+        },
+        {
+          "name": "thesaurus_variant",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "pk": true
+            },
+            {
+              "name": "concept_id",
+              "type": "uuid",
+              "fk": "thesaurus_concept.id"
+            },
+            {
+              "name": "variant",
+              "type": "text",
+              "note": "plusvalía municipal / plusvàlua"
+            },
+            {
+              "name": "lang",
+              "type": "text"
+            }
+          ]
+        },
+        {
+          "name": "answer_cache",
+          "fields": [
+            {
+              "name": "key",
+              "type": "text",
+              "pk": true,
+              "note": "hash(query+lang+corpus_version)"
+            },
+            {
+              "name": "answer",
+              "type": "jsonb"
+            },
+            {
+              "name": "citations",
+              "type": "jsonb"
+            },
+            {
+              "name": "status",
+              "type": "text",
+              "note": "validated | candidate"
+            }
+          ]
+        },
+        {
+          "name": "feedback",
+          "fields": [
+            {
+              "name": "id",
+              "type": "uuid",
+              "pk": true
+            },
+            {
+              "name": "query",
+              "type": "text"
+            },
+            {
+              "name": "verdict",
+              "type": "text",
+              "note": "good | bad"
+            },
+            {
+              "name": "state",
+              "type": "text",
+              "note": "Nueva→Validada→Resuelta"
+            },
+            {
+              "name": "correction",
+              "type": "text"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "file-tree",
+      "title": "Dónde aterriza el código (repo SonIA + extensión de pageindex)",
+      "entries": [
+        {
+          "path": "sonia/app/graph/build.py",
+          "change": "added",
+          "note": "StateGraph + checkpointer Postgres + compile()"
+        },
+        {
+          "path": "sonia/app/graph/nodes/",
+          "change": "added",
+          "note": "language_id, intent_router, coref_rewrite, thesaurus_expand, decompose, tree_search, answer_compose, groundedness_verify, citation_format"
+        },
+        {
+          "path": "sonia/app/tools/",
+          "change": "added",
+          "note": "deepagents @tool: tree_search, thesaurus, grounding, cache, citation, automation"
+        },
+        {
+          "path": "sonia/app/llm/gateway.py",
+          "change": "added",
+          "note": "init_chat_model → LiteLLM (Azure dev / vLLM prod)"
+        },
+        {
+          "path": "sonia/app/api/chat.py",
+          "change": "added",
+          "note": "POST /chat + WS /chat/stream (token + audio)"
+        },
+        {
+          "path": "sonia/eval/",
+          "change": "added",
+          "note": "golden set, rubrics YAML, judges, metrics, gates, report"
+        },
+        {
+          "path": "pageindexomniloy/app/store/postgres.py",
+          "change": "added",
+          "note": "implementa Store Protocol sobre PostgreSQL+pgvector (sustituye memory.py)"
+        },
+        {
+          "path": "pageindexomniloy/app/indexing/docx_pipeline.py",
+          "change": "added",
+          "note": "ingesta .docx del Texto Refundido (python-docx)"
+        },
+        {
+          "path": "pageindexomniloy/app/indexing/vlm_extract.py",
+          "change": "added",
+          "note": "ingesta multimodal de tablas/figuras (VLM)"
+        },
+        {
+          "path": "pageindexomniloy/app/indexing/tree_builder.py",
+          "change": "unchanged",
+          "note": "REUTILIZAR — joya de la corona, agnóstico de formato"
+        },
+        {
+          "path": "pageindexomniloy/app/retrieval/pages.py",
+          "change": "modified",
+          "note": "devolver objeto de cita {doc, node, section_path, page}"
+        },
+        {
+          "path": "infra/",
+          "change": "added",
+          "note": "OpenTofu (AKS+GPU, PostgreSQL, Blob) + Helm (vLLM, LiteLLM, Langfuse, KEDA)"
+        }
+      ]
+    },
+    {
+      "type": "image",
+      "title": "Figura 10 — Cronograma: 17 semanas (Fases 1–3) + 12 de soporte",
+      "src": "assets/fig10-gantt.png"
+    },
+    {
+      "type": "table",
+      "title": "Priorización MoSCoW (PRD)",
+      "columns": [
+        "Categoría",
+        "Alcance"
+      ],
+      "rows": [
+        [
+          "Must",
+          "RAG verificable sobre el «Texto Refundido», búsqueda semántica, multilingüe ES/Valencià/EN (texto y voz), chatbot web interno, determinismo, seguridad (ENS/ENI/RGPD), despliegue híbrido, documentación, pruebas, piloto, formación y soporte."
+        ],
+        [
+          "Should",
+          "Tesauro fiscal, chat en vivo, automatización supervisada, cuadros de mando, aprendizaje supervisado, accesibilidad WCAG 2.1, interoperabilidad, gestión documental, aprendizaje instantáneo y analítica."
+        ],
+        [
+          "Could",
+          "Canal de correo (preparado) e integraciones adicionales con terceros."
+        ],
+        [
+          "Won't (fuera de alcance)",
+          "Despliegue completo de telefonía y WhatsApp, voz-a-voz conversacional, búsqueda proactiva/notificaciones y reorganización automática avanzada del conocimiento."
+        ]
+      ]
+    }
+  ],
+  "open_questions": [
+    "RESUELTO — Nombre de producto: este proyecto es «SonIA» (repo Omniloy/SonIA). Es distinto del proyecto «SofIA» (otro proyecto de Omniloy); las figuras del PRD que muestran «SofIA» son ilustrativas y se rebrandearán a SonIA en la UI.",
+    "RESUELTO — Topología de repos: «pageindexomniloy» permanece como backend separado (Omniloy/pageindexomniloy), que SonIA extiende y consume por API. SonIA aloja el agente (sonia/) + IaC (infra/).",
+    "Modelo exacto: el PRD nombra «Qwen 3.6 27B». Confirmar id/disponibilidad real del checkpoint open-weights (puede ser Qwen3-32B u otro) y plan de fine-tuning/valenciano. [needs decision]",
+    "Dataset de fine-tuning valenciano: fuentes, licencias y proceso de revisión humana (personal SUMA valencianohablante).",
+    "VLM para ingesta multimodal de tablas/figuras: selección de modelo y despliegue (mismo vLLM u otro servicio).",
+    "Trámites a automatizar primero (E4.1): el PRD los deja «a concretar con SUMA» — requiere taller de priorización en Fase 1/2.",
+    "Detalle de integración de canales ciudadanos (sede, correo, telefonía): ejecutados por el proveedor web de SUMA; alcance = dejar plataforma preparada + conectores."
+  ],
+  "epics": [
+    {
+      "key": "e0-bootstrap",
+      "title": "E0 · Arranque, gobernanza y plataforma base",
+      "summary_md": "Pone en marcha el proyecto: gobernanza (SPOC, RACI, cadencia semanal con acta, tablero Kanban, presencialidad en Alicante), confidencialidad (NDA) y POC de seguridad, ingesta segura del «Texto Refundido», arquitectura técnica inicial con ADRs, y la **pasarela de modelos LiteLLM** que toda la solución usará (dev → Azure OpenAI EEE; prod → vLLM/Qwen). Cierra con la *documentación técnica inicial* entregable de Fase 1.",
+      "labels": [
+        "epic",
+        "phase-1",
+        "area:infra"
+      ],
+      "milestone": "Fase 1 — Planificación y conocimiento",
+      "prd_refs": [
+        "E0.1",
+        "E0.2",
+        "§5.1 Modelo de relación y seguimiento",
+        "§1.2 Inventario de software"
+      ],
+      "issues": [
+        {
+          "title": "E0.1 · Arranque, gobernanza y toma de requisitos",
+          "functional_md": "Establece cómo se gobierna el proyecto con SUMA: interlocutor único (SPOC), reunión semanal con acta, comité por fase, tablero Kanban, metodología ágil con demostración al final de cada fase y jornada presencial semanal en Alicante. Recoge y prioriza requisitos (historias de usuario MoSCoW).",
+          "technical_md": "Scaffold del repo `Omniloy/SonIA` (`sonia/` agente + `infra/`). El backend de recuperación `pageindexomniloy` permanece como repo/servicio SEPARADO (Omniloy/pageindexomniloy) que SonIA extiende y consume por API — no se absorbe. `pyproject.toml` (uv), pre-commit (ruff/black/mypy), GitHub Actions CI (lint+test), branch protection y CODEOWNERS. Plantillas de issue/PR. Tablero de proyecto (Kanban) y matriz RACI por actividad. Acta semanal versionada en `docs/gobernanza/`.",
+          "acceptance": [
+            "Repo SonIA con CI verde (lint+test) y branch protection activa",
+            "Backlog de historias de usuario E0–E7 cargado y priorizado (MoSCoW) en el tablero",
+            "RACI, cadencia semanal con acta y SPOC documentados en docs/gobernanza/",
+            "Plan de proyecto inicial aprobado por SUMA"
+          ],
+          "prd_refs": [
+            "E0.1",
+            "§5.1"
+          ],
+          "labels": [
+            "phase-1",
+            "area:docs",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "E0.2 · Confidencialidad (NDA) y POC de seguridad",
+          "functional_md": "Formaliza la confidencialidad y designa el Punto de Contacto (POC) de seguridad que canaliza el cumplimiento y la gestión de incidentes durante toda la vigencia, conforme al apartado 9 del PPT.",
+          "technical_md": "Designación nominal del POC y canal de incidentes. Política de gestión de secretos (Azure Key Vault / HashiCorp Vault) y baseline de manejo de datos confidenciales (clasificación, residencia EEE, no reutilización del dato de SUMA). Plantilla de plan de devolución/destrucción (apartado 10) para el cierre. Acuerdo de no reutilización en `docs/seguridad/`.",
+          "acceptance": [
+            "POC de seguridad designado y comunicado a SUMA",
+            "Gestor de secretos operativo; ningún secreto en repo (escaneo en CI)",
+            "Política de confidencialidad, residencia EEE y destrucción de datos documentada"
+          ],
+          "prd_refs": [
+            "E0.2",
+            "§4.3 Punto de contacto y confidencialidad",
+            "§5.3"
+          ],
+          "labels": [
+            "phase-1",
+            "area:security",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "S"
+        },
+        {
+          "title": "E0.3 · Ingesta segura del «Texto Refundido» y arranque del corpus",
+          "functional_md": "Recepción segura del documento Word de ~800 páginas (el «Texto Refundido») y de la documentación de arranque, sin conectores a medida en esta fase, dejando lista la base documental evolutiva.",
+          "technical_md": "Canal de entrega cifrado y almacenamiento del original en el bucket EEE con cifrado en reposo (AES-256/TDE). Registro del documento como artefacto versionado (hash) para trazar `corpus_version`. Inventario del corpus inicial (Texto Refundido + circulares/manuales previstos) en `docs/corpus/`.",
+          "acceptance": [
+            "«Texto Refundido» recibido por canal seguro y almacenado cifrado en EEE",
+            "Hash/version del original registrado como corpus_version=1",
+            "Inventario del corpus inicial documentado"
+          ],
+          "prd_refs": [
+            "E1.1",
+            "§1.1 Ingesta inicial por ficheros"
+          ],
+          "labels": [
+            "phase-1",
+            "area:security",
+            "area:data",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "S"
+        },
+        {
+          "title": "E0.4 · Arquitectura técnica inicial y ADRs (documentación técnica inicial)",
+          "functional_md": "Produce la documentación técnica inicial entregable de Fase 1: arquitectura de la solución, decisiones clave razonadas y plan de seguridad/despliegue, de modo que SUMA valide el diseño antes de construir.",
+          "technical_md": "Documento de arquitectura + diagramas (reutilizar Figuras 1/3/5). ADRs en `docs/adr/`: (1) deepagents/LangGraph como spine; (2) RAG razonado sin vectores; (3) extender pageindexomniloy vs reescribir; (4) PostgreSQL+pgvector+RLS; (5) LiteLLM+vLLM+Qwen; (6) Langfuse; (7) Keycloak OIDC. Plan de despliegue híbrido (mín. clúster A100 / recomendado H100) y mapa de cumplimiento ENS/ENI/RGPD inicial.",
+          "acceptance": [
+            "Documento de arquitectura + 7 ADRs aprobados por SUMA",
+            "Plan de despliegue híbrido (mínimo/recomendado) documentado con dimensionamiento GPU",
+            "Mapa inicial de cumplimiento ENS/ENI/RGPD entregado"
+          ],
+          "prd_refs": [
+            "§4.2 Especificaciones de arquitectura e infraestructura",
+            "§4.2 Plan de despliegue híbrido",
+            "Figura 5"
+          ],
+          "labels": [
+            "phase-1",
+            "area:infra",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "E0.5 · Acceso a modelos OpenAI (Fase 1) vía capa compatible",
+          "functional_md": "Fase 1 usa modelos de OpenAI como motor del asistente. Se accede a través de una capa compatible con OpenAI para no acoplar el código, de modo que en una fase posterior se pueda conmutar al modelo open-weights autoalojado (Qwen/vLLM) sin reescribir.",
+          "technical_md": "Configurar `init_chat_model` (LangChain) apuntando a OpenAI; opcionalmente LiteLLM como capa OpenAI-compatible para dejar el conmutador preparado (`OPENAI_BASE_URL`). El cliente OpenAI de `pageindexomniloy/app/indexing/llm_client.py` y los nodos del agente leen `OPENAI_API_KEY` desde variable de entorno / gestor de secretos (**nunca** en el repo; clave rotada). Selección de modelo por tarea (ingesta/summary/judge/respuesta) por configuración. La pasarela Azure-EEE/vLLM con `model_name: sofia-llm` y callbacks Langfuse queda como hoja de ruta de la fase de despliegue.",
+          "acceptance": [
+            "El agente y el pipeline de ingesta responden usando OpenAI",
+            "Clave OPENAI_API_KEY leída de entorno/secreto; ningún secreto en el repo (escaneo en CI)",
+            "Selección de modelo por tarea configurable",
+            "Capa OpenAI-compatible deja preparada la conmutación futura a vLLM/Qwen"
+          ],
+          "prd_refs": [
+            "§1.2 Inventario de software",
+            "§4.1 Modelos y despliegue"
+          ],
+          "labels": [
+            "phase-1",
+            "area:infra",
+            "type:infra",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "S"
+        }
+      ]
+    },
+    {
+      "key": "e1-intake",
+      "title": "E1 · Ingesta y estructuración del corpus (PageIndex)",
+      "summary_md": "Convierte el «Texto Refundido» y la documentación asociada en el **árbol jerárquico** sobre el que razona el agente. Migra el backend `pageindexomniloy` de almacenamiento **en memoria → PostgreSQL+pgvector con RLS**, añade ingesta **.docx** y **multimodal (VLM)**, **anclaje de citas** a página/apartado, **verificación de calidad del árbol**, búsqueda a nivel de colección (PageIndex File System), **tesauro fiscal**, ingesta **asíncrona** y **re-indexado incremental** (corpus vivo). Se reutiliza el `tree_builder` existente (agnóstico de formato) y el `Store` Protocol.",
+      "labels": [
+        "epic",
+        "phase-1",
+        "area:intake",
+        "area:data"
+      ],
+      "milestone": "Fase 1 — Planificación y conocimiento",
+      "prd_refs": [
+        "E1.1",
+        "E1.2",
+        "E1.3",
+        "§1.1 Proceso de ingesta",
+        "§1.1 Implementación diferencial"
+      ],
+      "blocks": [
+        {
+          "type": "image",
+          "title": "Figura 2 — Recuperación por razonamiento (tree-search)",
+          "src": "assets/fig2-tree-search-flow.png"
+        }
+      ],
+      "issues": [
+        {
+          "title": "E1.1 · Migrar el store de PageIndex a PostgreSQL + pgvector (RLS/RBAC)",
+          "functional_md": "El backend de conocimiento debe persistir el árbol, los metadatos y los registros de forma duradera, segura y escalable, sustituyendo el almacenamiento en memoria actual (que se pierde al reiniciar y no escala).",
+          "technical_md": "BUILD NEW `pageindexomniloy/app/store/postgres.py` implementando el `Store` Protocol de `app/store/base.py` (mismas 9 firmas → routers y pipelines sin cambios). Esquema: `collections`, `documents`, `tree_nodes` (recursivo, con `section_path`, `start_page`/`end_page`, `embedding vector(1024)`), `pages`. Migraciones Alembic. Conexión como rol no-superuser/no-BYPASSRLS; **RLS** por `tenant_id` con `set_config('app.current_tenant', …, true)` por transacción. Pool async (asyncpg/SQLAlchemy). Sustituir el singleton `get_store()`; conservar el borrado en cascada. Driver de DB añadido a deps.",
+          "acceptance": [
+            "store/postgres.py pasa la misma suite de integración que InMemoryStore (66 tests verdes)",
+            "El árbol y el contenido sobreviven a reinicios del proceso",
+            "RLS impide acceso cross-tenant a nivel de base de datos (test de aislamiento)",
+            "Migraciones Alembic versionadas y reproducibles"
+          ],
+          "prd_refs": [
+            "§1.1 Implementación diferencial (PostgreSQL)",
+            "§4.3 Acceso a datos (RLS+RBAC)"
+          ],
+          "labels": [
+            "phase-1",
+            "area:data",
+            "type:infra",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "L"
+        },
+        {
+          "title": "E1.2 · Ingesta y estructuración del «Texto Refundido» (.docx, ~800 págs.)",
+          "functional_md": "El sistema debe ingerir el documento Word de ~800 páginas y estructurarlo en un árbol que respeta títulos, capítulos, artículos y anexos —sin trocear a ciegas— preservando el contexto para la recuperación verificable.",
+          "technical_md": "BUILD NEW `app/indexing/docx_pipeline.py` (python-docx) que produce la misma tupla `(pages, tree)` que `pdf_pipeline.py`. Word no tiene páginas reales: derivar «páginas» sintéticas a partir de encabezados/saltos de sección/offset de palabras (patrón de `md_pipeline.py`). REUSE `tree_builder.py` (detect_sections / enforce_limits / split_oversized_section / generate_summaries) sin cambios. Cablear `.docx` en `routers/documents.py::_detect_format` y en la lista de `UnsupportedFormat`. Mapear `section_path` (Título→Cap→Art) en cada nodo.",
+          "acceptance": [
+            "El «Texto Refundido» .docx se ingiere produciendo un árbol con cobertura total de páginas",
+            "Los nodos reflejan la jerarquía Título→Capítulo→Artículo/Anexo con section_path",
+            "Fallback determinista de splitting si el LLM falla (sin crash a mitad de ingesta)",
+            "Resúmenes por nodo generados y persistidos"
+          ],
+          "prd_refs": [
+            "E1.1",
+            "§1.1 Proceso de ingesta (fase 1-2)"
+          ],
+          "labels": [
+            "phase-1",
+            "area:intake",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "L"
+        },
+        {
+          "title": "E1.3 · Ingesta multimodal de tablas, gráficos y figuras (VLM)",
+          "functional_md": "El corpus incluye tablas, gráficos y esquemas que el asistente debe interpretar y citar; deben comprenderse con modelos de visión-lenguaje, no sólo extraer texto por OCR, preservando la jerarquía.",
+          "technical_md": "BUILD NEW `app/indexing/vlm_extract.py`: detecta tablas/figuras (en .docx y .pdf), las describe vía VLM (servido por vLLM/LiteLLM) y emite texto enriquecido + nodos de tabla/figura que alimentan `tree_builder`. EXTEND pdf/docx pipelines para invocarlo. EXTEND `TreeNode` con refs de figura/tabla para cita multimodal.",
+          "acceptance": [
+            "Una tabla del corpus se ingiere como nodo describible y citable (no texto garbled)",
+            "Las figuras/tablas conservan su página y apartado para la cita",
+            "La ingesta multimodal es configurable (on/off) por colección"
+          ],
+          "prd_refs": [
+            "§1.1 Ingesta multimodal con VLM",
+            "§1.1 Implementación diferencial"
+          ],
+          "labels": [
+            "phase-1",
+            "area:intake",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "L"
+        },
+        {
+          "title": "E1.4 · Ingesta de normativa, circulares y manuales internos (multi-documento)",
+          "functional_md": "Además del «Texto Refundido», el asistente debe incorporar progresivamente normativa, circulares y manuales internos, con una base documental evolutiva.",
+          "technical_md": "Aprovechar el modelo de `collections`/`documents`. Endpoint de subida multi-doc ya existe (`POST /collections/{id}/documents`). Normalizar `language` (es/va/en) como campo validado. Documentar el procedimiento de alta de nuevos documentos para administradores (enlaza con E7.1 panel de gestión documental).",
+          "acceptance": [
+            "Se pueden ingerir y consultar varios documentos en una colección",
+            "Cada documento conserva metadatos (nombre, descripción, idioma, formato, versión)",
+            "El árbol combinado de la colección se sirve para el agente"
+          ],
+          "prd_refs": [
+            "E1.2"
+          ],
+          "labels": [
+            "phase-1",
+            "area:intake",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "E1.5 · Anclaje de citas en el contrato de recuperación",
+          "functional_md": "Cada respuesta debe poder vincularse a documento, apartado y página exactos; el backend debe devolver esa cita estructurada, no sólo el texto de la página.",
+          "technical_md": "EXTEND `app/retrieval/pages.py` + `routers/retrieval.py::get_page_content` para devolver un objeto de cita `{doc_id, doc_name, node_id, section_title, section_path, page, anchor?}` junto al texto. REUSE `available_sections()` (ya mapea hojas→rangos) para resolver la sección que contiene la página recorriendo el árbol. Mantener los payloads de error auto-correctivos (available_documents/sections).",
+          "acceptance": [
+            "get_page_content devuelve cita {documento, apartado, section_path, página} además del texto",
+            "La cita se resuelve correctamente para cualquier página dentro de un nodo hoja",
+            "Compatibilidad hacia atrás del contrato de recuperación (tests existentes verdes)"
+          ],
+          "prd_refs": [
+            "E2.2",
+            "§1.1 Mecanismo de verificabilidad"
+          ],
+          "labels": [
+            "phase-1",
+            "area:intake",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "E1.6 · Verificación de calidad del árbol (cobertura, granularidad, integridad)",
+          "functional_md": "Antes de poner el conocimiento en producción hay que garantizar que el árbol cubre todo el documento, con granularidad adecuada y referencias íntegras.",
+          "technical_md": "BUILD NEW comprobaciones (script + test) sobre el árbol generado: cobertura 100% del rango de páginas (sin huecos/solapes), tamaño de nodo dentro de `MAX_PAGES/MAX_TOKENS`, profundidad ≤ MAX_DEPTH, integridad de `section_path` y de las referencias cruzadas. Informe de calidad por documento.",
+          "acceptance": [
+            "Informe de calidad del árbol con cobertura/granularidad/integridad por documento",
+            "Fallo del gate si hay huecos de cobertura o nodos fuera de límites",
+            "Integrado en el pipeline de ingesta como verificación post-build"
+          ],
+          "prd_refs": [
+            "§1.1 Proceso de ingesta (fase 4)"
+          ],
+          "labels": [
+            "phase-1",
+            "area:intake",
+            "type:test",
+            "moscow:should"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "E1.7 · Búsqueda a nivel de colección (PageIndex File System)",
+          "functional_md": "El agente debe razonar no sólo sobre un documento, sino sobre toda la base documental de SUMA, acorde a su naturaleza evolutiva.",
+          "technical_md": "EXTEND `routers/retrieval.py::get_collection_structure` (hoy concatena árboles planos) para construir/servir un árbol padre a nivel de colección (PageIndex File System) que el agente navega para elegir documento→sección. Considerar índice de navegación cacheado por colección + `corpus_version`.",
+          "acceptance": [
+            "El agente puede seleccionar el documento correcto dentro de una colección vía tree-search",
+            "El árbol de colección se reconstruye al cambiar el corpus (versionado)",
+            "Latencia de obtención del árbol de colección dentro de objetivo"
+          ],
+          "prd_refs": [
+            "§1.1 Escalado a todo el corpus (PageIndex File System)"
+          ],
+          "labels": [
+            "phase-1",
+            "area:intake",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E1.8 · Ingesta asíncrona (cola de trabajos) para documentos grandes",
+          "functional_md": "Ingerir un documento de 800 páginas no puede bloquear la petición ni agotar memoria; debe ejecutarse como trabajo en segundo plano con estado consultable.",
+          "technical_md": "BUILD NEW cola de trabajos (p. ej. ARQ/Celery o background worker en K8s) para la ingesta; `POST /documents` encola y devuelve `job_id`; estado `reindex_in_progress`. Streaming/persistencia de páginas a Postgres en vez de RAM. Nuevo error code para estado en curso.",
+          "acceptance": [
+            "La ingesta de 800 págs. se ejecuta como job sin bloquear la API",
+            "Estado del job consultable (encolado/en curso/listo/fallo)",
+            "Uso de memoria acotado durante la ingesta"
+          ],
+          "prd_refs": [
+            "§4.2 (autoescalado/elasticidad)"
+          ],
+          "labels": [
+            "phase-2",
+            "area:intake",
+            "type:infra",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E1.9 · Re-indexado incremental y versionado del corpus (corpus vivo)",
+          "functional_md": "El corpus es vivo: al actualizar un documento sólo deben reprocesarse los nodos afectados (sin re-troceado ni re-embebido global), manteniendo el conocimiento actualizado de forma ágil durante toda la vigencia.",
+          "technical_md": "BUILD NEW diff a nivel de nodo + re-summarize usando primitivas de `tree_builder`. EXTEND `documents` con `version`/`content_hash`; EXTEND `PUT …/documents/{id}` para re-ingesta opcional. Invalida `answer_cache` por `corpus_version`. Base para «aprendizaje instantáneo» (E7.2).",
+          "acceptance": [
+            "Actualizar un documento reprocesa sólo los nodos afectados",
+            "corpus_version se incrementa y queda trazado en cada nodo/cita",
+            "answer_cache afectado se invalida automáticamente al subir corpus_version"
+          ],
+          "prd_refs": [
+            "§1.1 Actualización incremental",
+            "§4.3 Aprendizaje supervisado"
+          ],
+          "labels": [
+            "phase-2",
+            "area:intake",
+            "area:data",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "E1.10 · API CRUD de árbol/nodos en pageindexomniloy (PR de backend)",
+          "functional_md": "Para poder corregir el conocimiento a nivel de nodo (editar el resumen de una sección, borrar una hoja obsoleta, re-resumir un capítulo) sin reingerir el documento completo, el backend PageIndex debe exponer operaciones CRUD sobre el árbol y sus hojas. Habilita la auto-corrección/remediación (E7.5) y el re-indexado incremental (E1.9).",
+          "technical_md": "BUILD NEW en el repo SEPARADO `Omniloy/pageindexomniloy` (esta issue **traza** el trabajo; el cambio es de backend): endpoints CRUD de nodos sobre `Document.tree` — `GET/PUT/DELETE /collections/{cid}/documents/{did}/nodes/{node_id}` (leer, editar título/resumen/rango, borrar subárbol con recálculo de cobertura) y `POST .../nodes/{node_id}/resummarize` (re-genera el resumen con `llm_client`), opcional `POST .../nodes` (añadir nodo). Reutiliza `models/tree.py` + `tree_builder`. Payloads de error auto-correctivos (available nodes). **El PR se crea y se prueba, pero lo MERGEA el humano** (no auto-merge); se ejecuta la revisión (review-pr/Greptile) sobre ese repo. Cliente SonIA: extender `sonia/app/retrieval/pageindex_client.py` con los métodos de nodo cuando el PR se mergee.",
+          "acceptance": [
+            "PR abierto en Omniloy/pageindexomniloy con CRUD de nodos + resummarize, con tests",
+            "GET/PUT/DELETE de un nodo y re-summarize funcionan contra el árbol almacenado",
+            "Revisión (review-pr/Greptile) ejecutada en el repo de backend",
+            "El PR queda LISTO para que el humano lo mergee (no auto-merge)",
+            "Issue trazada bajo E1; cliente SonIA a extender tras el merge"
+          ],
+          "prd_refs": [
+            "E1.9",
+            "E7.5",
+            "§1.1 Implementación diferencial"
+          ],
+          "labels": [
+            "phase-2",
+            "area:intake",
+            "area:data",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        }
+      ]
+    },
+    {
+      "key": "e2-rag-core",
+      "title": "E2 · Núcleo RAG razonado — deep agent (deepagents + LangGraph)",
+      "summary_md": "El cerebro de SonIA: un **deep agent** que planifica, recupera por **tree-search**, expande con el **tesauro**, compone, **verifica la fundamentación**, **cita** y, si no hay fuente, **se abstiene**. Implementa las herramientas del agente, los sub-agents (retrieval / verificación / planner), el determinismo, el soporte **multilingüe ES/Valencià/EN**, el **fine-tuning** del modelo de producción (incl. valenciano) y el **marco de evaluación** (golden set + LLM-as-judge con rúbricas) que actúa de gate de promoción.",
+      "labels": [
+        "epic",
+        "phase-2",
+        "area:rag",
+        "area:nlp"
+      ],
+      "milestone": "Fase 2 — Entrenamiento y uso interno",
+      "prd_refs": [
+        "E2.1",
+        "E2.2",
+        "E2.3",
+        "E2.4",
+        "§1.1 Pruebas de NLP",
+        "§1.1 Orquestación agéntica (deep agents)"
+      ],
+      "issues": [
+        {
+          "title": "E2.1 · Orquestador deepagents + máquina de estados LangGraph",
+          "functional_md": "Pone en pie el agente que recibe una consulta y ejecuta el ciclo planificar→recuperar→verificar→citar (o abstenerse), con memoria de conversación persistente para sesiones largas y aprobación humana en acciones sensibles.",
+          "technical_md": "BUILD NEW `sonia/app/graph/build.py` con `deepagents.create_deep_agent(model=init_chat_model(base_url=LiteLLM), tools=[…], subagents=[…], system_prompt=…, interrupt_on={…}, checkpointer=PostgresSaver, store=…)`. `AgentState` (`graph/state.py`): query, lang, intent, rewritten_query, sub_questions[], evidence[], claims[], citations[], answer, abstained, trace_id. Nodos en `graph/nodes/`. `response_format` fija el esquema de respuesta `{answer, citations[], confidence, abstained}`. Excluir `AnthropicPromptCachingMiddleware` (Anthropic-only). FastAPI invoca `.ainvoke/.astream` reusando `thread_id` por sesión.",
+          "acceptance": [
+            "create_deep_agent compila y responde una consulta simple end-to-end con cita",
+            "Estado de conversación persiste en Postgres checkpointer (reanudable por thread_id)",
+            "Respuesta estructurada {answer, citations[], confidence, abstained}",
+            "Acciones WRITE gateadas por interrupt_on (aprobación humana)"
+          ],
+          "prd_refs": [
+            "§1.1 Orquestación agéntica (deep agents)",
+            "E2.1"
+          ],
+          "labels": [
+            "phase-2",
+            "area:rag",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "E2.2 · Herramientas de tree-search + sub-agent de recuperación",
+          "functional_md": "Búsqueda semántica razonada sobre el corpus: el agente navega el árbol (lee resúmenes y rangos de página, baja al nodo relevante) y extrae el texto exacto, iterando si la evidencia es insuficiente.",
+          "technical_md": "BUILD NEW `sonia/app/tools/tree_search_tool.py`: `get_collection_structure`, `get_document_structure`, `get_page_content` (httpx → endpoints de pageindex). Docstrings load-bearing (codifican la disciplina «estructura antes que páginas»). Sub-agent `retrieval-agent` (contexto aislado) con estas tools: dada una sub-pregunta, hace tree-search y devuelve `{node_id, section_path, evidence}` — una llamada por sub-pregunta (fan-out `Send`). Manejo de payloads de error auto-correctivos (available_sections/documents).",
+          "acceptance": [
+            "El agente localiza la sección correcta vía tree-search y extrae el texto verbatim",
+            "Iteración cuando la evidencia es insuficiente (vuelve al árbol)",
+            "El sub-agent de recuperación aísla el recorrido del árbol del contexto del compositor",
+            "Recuperación de errores usando available_sections en el siguiente turno"
+          ],
+          "prd_refs": [
+            "E2.1 (búsqueda semántica razonada)",
+            "§1.1 Nuestro enfoque (tree-search)"
+          ],
+          "labels": [
+            "phase-2",
+            "area:rag",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "E2.3 · Comprensión de consulta: idioma, intención, correferencia y descomposición",
+          "functional_md": "Interpreta consultas complejas del personal —incluida la jerga— detectando idioma e intención, resolviendo referencias de la conversación y descomponiendo preguntas multi-salto en sub-preguntas; pide aclaración si la consulta es ambigua.",
+          "technical_md": "BUILD NEW nodos: `language_id` (fastText/lingua + fallback LLM; desambigua valenciano/catalán/español), `intent_router` (clasificador JSON con conjunto cerrado de intenciones, few-shots, `temperature=0`), `coref_rewrite` (correferencia + reescritura a registro del Texto Refundido en una sola llamada), `complexity_gate` + `decompose` (planner `write_todos` materializa sub-preguntas; fan-out `Send`). Aclaración activa cuando confianza baja.",
+          "acceptance": [
+            "Idioma detectado (es/va/en) y respuesta en el idioma de la consulta",
+            "Intención clasificada con conjunto cerrado y ruta acorde",
+            "Consulta multi-salto descompuesta en sub-preguntas inspeccionables (plan)",
+            "Aclaración solicitada ante consulta ambigua en lugar de suponer"
+          ],
+          "prd_refs": [
+            "E2.1",
+            "§1.1 Modelos y cadena de comprensión",
+            "§1.1 Descomposición de consultas"
+          ],
+          "labels": [
+            "phase-2",
+            "area:nlp",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "E2.4 · Tesauro/ontología fiscal: normalización y expansión de consulta",
+          "functional_md": "Resuelve sinónimos y jerga tributaria (p. ej. IIVTNU ≡ «plusvalía municipal»; vía de apremio ≡ procedimiento ejecutivo) de forma explícita y auditable, para que la consulta del usuario alcance la sección correcta del corpus.",
+          "technical_md": "BUILD NEW tablas `thesaurus_concept`/`thesaurus_variant`/`thesaurus_relation` (RLS) con índice `pg_trgm` + `unaccent`. Tool `thesaurus_tool.py`: `normalize_term(surface)→concepto canónico` y `expand_query(query)→{canonical_query, expansion_terms[], concepts[]}`, ejecutado en `nodes/thesaurus_expand.py` antes del tree-search. Sinónimos como **datos editables por SUMA** (no en el prompt). Seed inicial (IBI, IVTM, IAE, IIVTNU, fraccionamiento/aplazamiento, diligencia de embargo…).",
+          "acceptance": [
+            "«plusvalía municipal» alcanza la sección de IIVTNU vía normalización",
+            "Variantes valencianas y coloquiales resueltas (pg_trgm/unaccent)",
+            "El tesauro es editable por SUMA (fila en BD, no prompt) y auditable",
+            "Cada expansión lleva concept_id para puntuar exactitud de sinónimos"
+          ],
+          "prd_refs": [
+            "E1.3 (sinónimos)",
+            "§1.1 Gestión de sinónimos técnicos tributarios"
+          ],
+          "labels": [
+            "phase-2",
+            "area:nlp",
+            "area:data",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E2.5 · Respuestas con cita y enlace a la fuente",
+          "functional_md": "Cada respuesta muestra la referencia (documento + apartado + página) y un enlace directo al fragmento original, de modo que cualquier afirmación pueda comprobarse en su fuente.",
+          "technical_md": "BUILD NEW tool `record_citation` (acumula citas en estado vía `Command`) y nodo `citation_format.py`: por cada claim emite `{document, section_path, page_start–page_end, node_id}` renderizable como referencia clicable (deep-link al visor en esa página). La cita la rellena el sistema con el rango del nodo (el LLM sólo elige el nodo) → páginas fabricadas imposibles. Sin sistema de gestión de citas/turnos (aclarado por SUMA).",
+          "acceptance": [
+            "Toda respuesta fundamentada incluye cita {documento, apartado, página} y enlace",
+            "Las páginas citadas provienen del árbol, nunca generadas por el LLM",
+            "Citas de tablas/figuras apuntan al elemento y su página (multimodal)"
+          ],
+          "prd_refs": [
+            "E2.2 (respuestas con cita)",
+            "§1.1 Mecanismo de verificabilidad",
+            "Figura 4"
+          ],
+          "labels": [
+            "phase-2",
+            "area:rag",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E2.6 · Control de alucinaciones: verificación de fundamentación y abstención",
+          "functional_md": "Antes de responder, el sistema comprueba que cada afirmación se apoya en las fuentes citadas; lo no respaldado se descarta o corrige, y si no existe fuente suficiente el asistente lo indica en lugar de inventar.",
+          "technical_md": "BUILD NEW tool `verify_groundedness(answer_draft, evidence)→{grounded, unsupported_claims, score}` (estilo NLI/entailment) y sub-agent `groundedness-verifier` (contexto aislado, modelo más estricto). Bucle de reparación acotado (≤N=2) que reescribe/re-recupera (CRAG/Self-RAG). Tool `abstain(reason)` → respuesta canónica de no-soporte + sugerencia de escalado. Política: cualquier claim `no` tras reparación → se descarta; si deja la pregunta sin responder → abstención.",
+          "acceptance": [
+            "Cada afirmación enviada está respaldada por la evidencia citada",
+            "Claims no respaldados se reparan (≤2) o se descartan",
+            "Abstención controlada cuando no hay fuente suficiente (no inventa)",
+            "La abstención se registra como resultado de primera clase"
+          ],
+          "prd_refs": [
+            "E2.4 (control de alucinaciones)",
+            "§1.1 Comprobación de fundamentación"
+          ],
+          "labels": [
+            "phase-2",
+            "area:rag",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "E2.7 · Determinismo: temperatura/semilla, caché validada y plantillas",
+          "functional_md": "Ante la misma pregunta y la misma evidencia, el asistente debe dar la misma respuesta, de forma reproducible y auditable.",
+          "technical_md": "BUILD NEW `llm/params.py` (`temperature=0`, `seed`, `top_p=1` en todas las llamadas de decisión/respuesta). Tool `cache_tool.py` + tabla `answer_cache` con clave `hash(rewritten_query+lang+corpus_version)`; sólo se cachean respuestas que pasaron groundedness (y, en el nivel máximo, validadas por humano). Plantillas por intención en `nlp/prompts.py`. Citas derivadas del árbol → byte-estables por `corpus_version`. Invalidación por bump de corpus.",
+          "acceptance": [
+            "Misma consulta → misma respuesta y mismas citas (índice de consistencia objetivo)",
+            "Caché de respuestas validadas servida sin invocar al LLM en aciertos",
+            "Invalidación automática de la caché al cambiar corpus_version",
+            "Plantillas por intención estabilizan el formato"
+          ],
+          "prd_refs": [
+            "E2.4 (determinismo)",
+            "§4.3 Monitorización y determinismo"
+          ],
+          "labels": [
+            "phase-2",
+            "area:rag",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E2.8 · Multilingüe ES / Valencià / EN (texto)",
+          "functional_md": "El asistente responde de forma nativa en castellano, valenciano e inglés, detectando el idioma de la consulta y manteniendo terminología tributaria coherente por idioma, con rendimiento cross-lingual sólido (clave para el valenciano).",
+          "technical_md": "EXTEND `nodes/language_id.py` + `answer_compose`: recuperar contra el corpus (autoritativo en ES; sub-preguntas normalizadas a ES vía tesauro+rewrite) y **traducir respuesta + spans citados** a VAL/EN en composición, manteniendo las citas (documento/apartado/página) invariantes de idioma. `nlp/languages.py` con reglas de valenciano (orto/registro AVL). QA por idioma integrado en el marco de pruebas.",
+          "acceptance": [
+            "Consulta en valenciano contra corpus en castellano recupera la sección correcta",
+            "Respuesta en el idioma de la consulta con terminología coherente",
+            "Citas invariantes de idioma (mismo documento/apartado/página en es/va/en)"
+          ],
+          "prd_refs": [
+            "E2.3 (ES/Valencià/EN)",
+            "§4.3 Módulo multilingüe"
+          ],
+          "labels": [
+            "phase-2",
+            "area:nlp",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "(Fase posterior) E2.9 · Fine-tuning del modelo open-weights (Qwen, incl. valenciano)",
+          "functional_md": "DIFERIDO a fase posterior (configuración de modelo propio). Afinar el modelo open-weights al dominio tributario de SUMA y al valenciano, validándolo antes de promocionarse. En Fase 1 se usa OpenAI (E0.5), por lo que el fine-tuning se aborda al introducir el modelo autoalojado (E5.2).",
+          "technical_md": "[Fase posterior] BUILD NEW pipeline de SFT (LoRA/QLoRA) sobre Qwen open-weights con dataset propietario: (1) contenido SUMA ES/VAL paralelo; (2) QA sintético sobre el corpus con citas; (3) recursos lingüísticos valencianos (AVL); (4) revisión humana. Eval en slice por idioma del golden set (E2.10). Guardarraíl: no degradar la fundamentación en ES (gate de regresión multilingüe). Promoción sólo si pasa el gate.",
+          "acceptance": [
+            "Dataset de fine-tuning construido (incl. valenciano) y versionado",
+            "Checkpoint afinado supera baseline en slice valenciano sin regresión en ES",
+            "Validado con golden set + rúbricas antes de promoción"
+          ],
+          "prd_refs": [
+            "E2.3",
+            "§1.1 Modelos y despliegue (fine-tuning)",
+            "§4.3 Módulo multilingüe"
+          ],
+          "labels": [
+            "phase-support",
+            "area:rag",
+            "area:eval",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Soporte post-implantación",
+          "estimate": "L"
+        },
+        {
+          "title": "E2.10 · Marco de evaluación: golden set + LLM-as-judge (rúbricas) + gating",
+          "functional_md": "Demuestra y mide objetivamente la calidad del asistente (comprensión, recuperación, fundamentación, verificabilidad, multilingüe, determinismo, sinónimos) de forma reproducible, y bloquea cualquier cambio que produzca regresión antes de pasar a producción.",
+          "technical_md": "BUILD NEW `sonia/eval/`: `golden/golden_set.jsonl` (300–500 ítems por expertos, con adversariales no-respondibles y paráfrasis de sinónimos, espejado ES/VAL/EN), `rubrics/*.yaml` (HealthBench-style, criterios atómicos ponderados + negativos), `judges/llm_judge.py` (modelo juez `temperature=0`, JSON por criterio, calibrado vs humano — κ), `metrics/` (intención, P/R@k de sección, groundedness/alucinación, % cita correcta, cross-lingual, determinismo, sinónimos, abstención), `gates.py` (umbrales; cita y alucinación con cero-regresión), `report.py`. Dataset/scores/trazas en Langfuse; promoción champion/challenger con A/B + validación humana.",
+          "acceptance": [
+            "golden set + rúbricas versionados como dataset Langfuse",
+            "Las 8 dimensiones de la tabla del PRD se computan por ejecución",
+            "Gate de regresión bloquea promoción si baja cita/groundedness/determinismo",
+            "Juez calibrado contra evaluación humana (acuerdo reportado)"
+          ],
+          "prd_refs": [
+            "§1.1 Metodología de pruebas de NLP",
+            "§1.1 (tabla de dimensiones)",
+            "§5.4 Pruebas de aceptación"
+          ],
+          "labels": [
+            "phase-2",
+            "area:eval",
+            "type:test",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        }
+      ]
+    },
+    {
+      "key": "e3-channels",
+      "title": "E3 · Canales — web embebible, voz (ASR), chat en vivo y correo",
+      "summary_md": "Expone el asistente al personal de SUMA. Arquitectura **API-first** (REST + WebSocket): componente web **React embebible** (streaming de tokens), **consultas por voz** (ASR), **chat en vivo con escalado a agente humano** y **canal de correo** (preparado/hoja de ruta). La integración efectiva en canales ciudadanos es evolutiva y la ejecuta el proveedor web de SUMA; nuestra responsabilidad es dejar la plataforma preparada y aportar conectores.",
+      "labels": [
+        "epic",
+        "phase-2",
+        "area:channels",
+        "area:frontend"
+      ],
+      "milestone": "Fase 2 — Entrenamiento y uso interno",
+      "prd_refs": [
+        "E3.1",
+        "E3.2",
+        "E3.3",
+        "E3.4",
+        "§4.3 Hoja de ruta multicanal"
+      ],
+      "issues": [
+        {
+          "title": "E3.1 · Capa de streaming FastAPI (WSS): tokens y eventos de razonamiento",
+          "functional_md": "El asistente responde en tiempo real, mostrando la respuesta a medida que se genera y señales de progreso (paso de tree-search, cita encontrada), para una experiencia fluida.",
+          "technical_md": "BUILD NEW `sonia/app/api/chat.py`: `POST /chat` y `WS /chat/stream`. Consume `agent.astream(..., stream_mode='messages')`/`astream_events` y reenvía deltas de token + eventos de tool/cita como frames JSON. Handshake autenticado con JWT Keycloak y fijación del contexto RLS por conexión. Heartbeats ping/pong para turnos largos; fan-out multi-réplica vía Redis pub/sub; fallback SSE/StreamingResponse.",
+          "acceptance": [
+            "Tokens y eventos de cita se transmiten por WSS en tiempo real",
+            "Handshake autenticado (JWT) y contexto RLS fijado por conexión",
+            "Heartbeats mantienen la conexión en turnos de razonamiento largos",
+            "Fallback SSE disponible"
+          ],
+          "prd_refs": [
+            "§4.2 Backend de servicios (API/WSS)",
+            "§4.3 Hoja de ruta multicanal"
+          ],
+          "labels": [
+            "phase-2",
+            "area:channels",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E3.2 · Chatbot web interno embebible (web component, accesible)",
+          "functional_md": "Interfaz de chat embebible en la sede para uso interno: el usuario consulta en lenguaje natural y recibe respuestas verificables con cita, selección de idioma (ES/VAL/EN), entrada por voz y valoración (útil/no útil).",
+          "technical_md": "BUILD NEW componente web React empaquetado como web component embebible (SDK/snippet tipo Click2Chat, sin acceso al núcleo). Renderiza respuesta + fuentes verificables con «abrir fragmento», selector de idioma, micrófono (E3.3), y valoración (alimenta E4.3). Cumple WCAG 2.1 AA (ver E5). Deep-link al visor de documento en la página citada.",
+          "acceptance": [
+            "Componente embebible vía snippet sin exponer el núcleo",
+            "Respuesta con fuentes verificables y enlace al fragmento",
+            "Selector de idioma ES/VAL/EN y botón de valoración funcionales",
+            "Conforme a WCAG 2.1 AA (auditoría axe + manual)"
+          ],
+          "prd_refs": [
+            "E3.1 (chatbot web interno)",
+            "§4.3 Módulo multilingüe",
+            "Figura 6",
+            "Figura 4"
+          ],
+          "labels": [
+            "phase-2",
+            "area:frontend",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "E3.3 · Consultas habladas (ASR streaming, ES/VAL/EN)",
+          "functional_md": "El usuario puede hablar su consulta y recibir la respuesta en el idioma de la consulta; la voz se transcribe en tiempo casi real con buen rendimiento en valenciano.",
+          "technical_md": "BUILD NEW worker de ASR (GPU) con `faster-whisper`/`whisper-large-v3` envuelto en streaming (WhisperLive/whisper_streaming, política LocalAgreement) o **Voxtral Realtime** sobre el mismo vLLM. Pipeline: mic navegador → chunks por WSS → transcripción incremental → alimenta el agente. Evaluar WER en valenciano vs castellano. TTS queda como hoja de ruta.",
+          "acceptance": [
+            "Transcripción incremental de voz a texto por WSS alimenta al agente",
+            "Rendimiento en valenciano evaluado (WER reportado)",
+            "El worker ASR escala de forma independiente (KEDA)"
+          ],
+          "prd_refs": [
+            "E3.2 (consultas habladas/voz)",
+            "§4.3 Módulo multilingüe (voz)"
+          ],
+          "labels": [
+            "phase-2",
+            "area:channels",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "E3.4 · Chat en vivo con escalado a agente humano",
+          "functional_md": "Cuando el usuario lo pide o el asistente no puede resolver, la conversación se escala a un agente humano de SUMA sin perder contexto.",
+          "technical_md": "BUILD NEW tool `escalate_to_human_agent(session_id, summary, transcript_ref)` (gateada por `interrupt_on`) + servicio de cola/asignación live-chat sobre WSS. Traspaso de transcripción y contexto; estado de ticket. Disparada por intención `escalation_request` o tras abstención.",
+          "acceptance": [
+            "El usuario puede solicitar y obtener escalado a un agente humano",
+            "El agente humano recibe transcripción y contexto de la sesión",
+            "El escalado se registra con ticket_id y queda trazado"
+          ],
+          "prd_refs": [
+            "E3.3 (chat en vivo con escalado)"
+          ],
+          "labels": [
+            "phase-2",
+            "area:channels",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E3.5 · Canal de correo electrónico (preparado / hoja de ruta)",
+          "functional_md": "El asistente queda preparado para atender por correo electrónico (conector entrante/saliente), como capacidad evolutiva.",
+          "technical_md": "BUILD NEW conector IMAP/SMTP/API (entrante→agente, saliente→respuesta) como adaptador sobre la API del agente. Alcance: dejar el conector listo y documentado; la activación efectiva en canales ciudadanos es evolutiva.",
+          "acceptance": [
+            "Conector de correo entrante/saliente operativo en entorno de pruebas",
+            "Respuestas de correo incluyen cita verificable",
+            "Documentado como capacidad evolutiva (hoja de ruta)"
+          ],
+          "prd_refs": [
+            "E3.4 (canal de correo)",
+            "§4.3 Hoja de ruta multicanal"
+          ],
+          "labels": [
+            "phase-2",
+            "area:channels",
+            "type:feature",
+            "moscow:could"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        }
+      ]
+    },
+    {
+      "key": "e4-automation",
+      "title": "E4 · Automatización supervisada, cuadros de mando y aprendizaje",
+      "summary_md": "Capacidades de control y mejora: **automatización de trámites supervisada** (human-in-the-loop), **cuadros de mando** operativos y de determinismo, y el **bucle de aprendizaje supervisado** (el personal valida/corrige; las correcciones se convierten en mejoras controladas con estados Nueva → Validada → Resuelta). Toda acción con efectos requiere validación humana.",
+      "labels": [
+        "epic",
+        "phase-2",
+        "area:automation"
+      ],
+      "milestone": "Fase 2 — Entrenamiento y uso interno",
+      "prd_refs": [
+        "E4.1",
+        "E4.2",
+        "E4.3",
+        "§4.3 Automatización",
+        "§4.3 Aprendizaje supervisado"
+      ],
+      "blocks": [
+        {
+          "type": "image",
+          "title": "Figura 9 — Cola de aprendizaje supervisado (Nueva → Validada → Resuelta)",
+          "src": "assets/fig9-supervised-learning.png"
+        }
+      ],
+      "issues": [
+        {
+          "title": "E4.1 · Automatización de trámites supervisada (human-in-the-loop)",
+          "functional_md": "La plataforma puede ejecutar trámites o fases de forma automatizada y determinista, pero siempre bajo supervisión humana para las acciones sensibles, con monitorización del estado de cada proceso. No se exige ejecución íntegra desatendida.",
+          "technical_md": "BUILD NEW tool `run_automation_action(action_id, params)` gateada por `interrupt_on` (aprobar/editar/rechazar). El payload de interrupción alimenta tarjetas de aprobación en la UI admin por WSS. Catálogo de acciones (a concretar con SUMA en taller). Ejemplos: borrador de respuesta a consulta frecuente, guía paso a paso de un trámite — con validación humana antes de cualquier efecto. Auditoría de cada ejecución.",
+          "acceptance": [
+            "Cada acción con efectos requiere aprobación humana (interrupt_on)",
+            "Tarjetas de aprobación (aprobar/editar/rechazar) en la UI admin",
+            "Estado y auditoría de cada proceso automatizado",
+            "Catálogo inicial de trámites priorizado con SUMA"
+          ],
+          "prd_refs": [
+            "E4.1 (automatización supervisada)",
+            "§4.3 Automatización de procesos administrativos"
+          ],
+          "labels": [
+            "phase-2",
+            "area:automation",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "E4.2 · Cuadros de mando de procesos y determinismo",
+          "functional_md": "Consola operativa para supervisar el servicio: volumen de consultas, latencia (TTFT/TPOT), tasa de resolución, % de respuestas con fuente citada, distribución por idioma y por tema, huecos de conocimiento, incidencias y determinismo/consistencia.",
+          "technical_md": "BUILD NEW dashboards (Langfuse + Grafana/Prometheus) y la vista «Cuadro de mando» de la consola admin (React). Métricas de servicio desde trazas Langfuse y métricas de vLLM. Panel de huecos de conocimiento (consultas sin fuente) que alimenta el ciclo de mejora.",
+          "acceptance": [
+            "Cuadro de mando en vivo con uso, latencia, % con fuente, idiomas y determinismo",
+            "Panel de huecos de conocimiento accionable",
+            "Métricas alimentadas por Langfuse + Prometheus/Grafana"
+          ],
+          "prd_refs": [
+            "E4.2 (cuadros de mando)",
+            "§4.3 Monitorización y determinismo",
+            "Figura 7"
+          ],
+          "labels": [
+            "phase-2",
+            "area:observability",
+            "area:frontend",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E4.3 · Bucle de aprendizaje supervisado (valoración y corrección)",
+          "functional_md": "El personal valida o corrige respuestas; las valoraciones positivas se incorporan al conjunto de fine-tuning y las negativas generan un caso con estados Nueva → Validada → Resuelta que SUMA resuelve por edición o auto-corrección, siempre con aprobación humana.",
+          "technical_md": "BUILD NEW tool `submit_feedback(query, answer, verdict, correction)` + tabla `feedback` (estado Nueva→Validada→Resuelta) + dataset Langfuse. UI de cola de revisión (Figura 9): aprobar/editar/descartar, auto-corrección (re-procesa/indexa un documento aportado), promoción de positivos al set de fine-tuning, plantillas para consultas frecuentes. Aprobación humana obligatoria; control de versiones del conocimiento (ENS).",
+          "acceptance": [
+            "Valoración positiva/negativa capturada y enrutada a la cola de revisión",
+            "Estados Nueva→Validada→Resuelta gestionables con aprobación humana",
+            "Positivos promovidos al set de fine-tuning; correcciones trazables y auditables",
+            "Auto-corrección reprocesa e indexa el documento aportado"
+          ],
+          "prd_refs": [
+            "E4.3 (aprendizaje supervisado)",
+            "§4.3 Aprendizaje supervisado"
+          ],
+          "labels": [
+            "phase-2",
+            "area:automation",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        }
+      ]
+    },
+    {
+      "key": "e5-infra-security",
+      "title": "E5 · Despliegue híbrido, infraestructura, seguridad y cumplimiento",
+      "summary_md": "Plataforma segura y portable. **Fase 1:** el agente corre en un **contenedor Docker** (modelo **OpenAI**), con cumplimiento **ENS medio/alto, ENI, RGPD/LOPDGDD**, cifrado, **identidades Keycloak (OIDC) + RLS**, auditoría, **observabilidad Langfuse**, **accesibilidad WCAG 2.1 AA**, interoperabilidad API-first y **seguridad específica de la IA** (OWASP LLM). El **despliegue productivo** (vLLM/Qwen, Kubernetes, IaC OpenTofu/Helm, autoescalado, on-premise) queda **diferido a una fase posterior**.",
+      "labels": [
+        "epic",
+        "phase-1",
+        "area:infra",
+        "area:security"
+      ],
+      "milestone": "Fase 1 — Planificación y conocimiento",
+      "prd_refs": [
+        "E5.1",
+        "E5.2",
+        "E5.3",
+        "E5.4",
+        "E5.5",
+        "§4.2 Protocolos de seguridad y escalabilidad"
+      ],
+      "blocks": [
+        {
+          "type": "image",
+          "title": "Figura 5 — Despliegue híbrido con autoescalado elástico",
+          "src": "assets/fig5-hybrid-deploy.png"
+        }
+      ],
+      "issues": [
+        {
+          "title": "E5.1 · Empaquetado del agente en contenedor Docker (Fase 1)",
+          "functional_md": "Para Fase 1 es suficiente con que el asistente (agente + backend de recuperación) se ejecute en un contenedor Docker reproducible; el despliegue productivo en Kubernetes/cloud se aborda en una fase posterior.",
+          "technical_md": "BUILD NEW `Dockerfile` (multi-stage) para el servicio del agente FastAPI (`sonia/`) y para el backend `pageindexomniloy`, más `docker-compose.yml` para desarrollo local (agente + PostgreSQL + Langfuse opcional). Variables de entorno/secretos (incl. `OPENAI_API_KEY`) inyectadas por entorno, nunca en la imagen. Imagen publicada en un registro. Healthchecks.",
+          "acceptance": [
+            "`docker compose up` levanta agente + PostgreSQL en local",
+            "Imagen del agente construye y arranca de forma reproducible",
+            "Secretos (OPENAI_API_KEY) inyectados por entorno, ausentes de la imagen y del repo",
+            "Healthcheck del contenedor operativo"
+          ],
+          "prd_refs": [
+            "E5.1 (despliegue)",
+            "§4.2 Despliegue híbrido y portabilidad"
+          ],
+          "labels": [
+            "phase-1",
+            "area:infra",
+            "type:infra",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "(Fase posterior) E5.2 · Servido del modelo open-weights con vLLM (Qwen, FP8/INT8/AWQ, KV-FP8, MTP)",
+          "functional_md": "DIFERIDO a fase posterior (configuración de modelo propio). Servir el modelo open-weights de producción de forma eficiente y con alta concurrencia, con cuantización según GPU/SLA. En Fase 1 se usa OpenAI (E0.5).",
+          "technical_md": "[Fase posterior] BUILD NEW Deployment vLLM `vllm serve Qwen3.6-27B` (OpenAI-compatible) en pool GPU: `--quantization awq|compressed-tensors(fp8)`, `--kv-cache-dtype fp8`, `--tensor-parallel-size`, `--speculative-config qwen3_mtp`. Detrás de la capa OpenAI-compatible (E0.5). Determinismo: `temperature=0`, `seed`, `top_p` fijos.",
+          "acceptance": [
+            "vLLM sirve Qwen vía endpoint OpenAI-compatible (conmutación desde OpenAI sin cambios de código)",
+            "Cuantización seleccionable (FP8 / INT8-AWQ)",
+            "MTP y KV-cache FP8 habilitados; concurrencia objetivo alcanzada"
+          ],
+          "prd_refs": [
+            "§4.2 Modelo de inferencia y aceleración",
+            "§4.2 Opciones de cuantización"
+          ],
+          "labels": [
+            "phase-support",
+            "area:infra",
+            "type:infra",
+            "moscow:should"
+          ],
+          "milestone": "Soporte post-implantación",
+          "estimate": "L"
+        },
+        {
+          "title": "(Fase posterior) E5.3 · Kubernetes, IaC (OpenTofu/Helm) y autoescalado en Azure EEE / on-premise",
+          "functional_md": "DIFERIDO a fase posterior (despliegue productivo). Desplegar la solución de forma reproducible y elástica en Azure (región EEE) o en las instalaciones de SUMA, con autoescalado ante picos y scale-to-zero fuera de horario.",
+          "technical_md": "[Fase posterior] BUILD NEW `infra/`: OpenTofu (AKS + GPU node pools, PostgreSQL, Blob/S3, red, Keycloak); Helm (vLLM production-stack, LiteLLM, Langfuse, KEDA, FastAPI, ASR); valores por entorno; namespaces/Network Policies. HPA (stateless) + KEDA `ScaledObject` para GPU (`vllm:num_requests_waiting`, `vllm:gpu_cache_usage_perc`, scale-to-zero) + Cluster Autoscaler. Portabilidad on-premise sin rediseño.",
+          "acceptance": [
+            "Despliegue reproducible en Azure EEE (y portable on-premise) vía OpenTofu + Helm",
+            "Autoescalado GPU 1…N por carga real y scale-to-zero fuera de horario",
+            "Separación de entornos (namespaces + network policies) y residencia EEE"
+          ],
+          "prd_refs": [
+            "E5.1 (despliegue on-premise/híbrido)",
+            "§4.2 Despliegue híbrido y portabilidad",
+            "§4.2 Escalabilidad"
+          ],
+          "labels": [
+            "phase-support",
+            "area:infra",
+            "type:infra",
+            "moscow:should"
+          ],
+          "milestone": "Soporte post-implantación",
+          "estimate": "L"
+        },
+        {
+          "title": "E5.4 · Cumplimiento ENS medio/alto, ENI y RGPD/LOPDGDD",
+          "functional_md": "La solución cumple ENS (RD 311/2022) nivel medio/alto y RGPD/LOPDGDD (protección de datos y residencia EEE), con trazabilidad y auditoría. La conformidad ENI se aborda de forma dedicada en la Epic E8.",
+          "technical_md": "Implementar controles ENS por dimensiones (confidencialidad, integridad, trazabilidad, autenticidad, disponibilidad). EIPD + registro de actividades de tratamiento (RGPD). Retención, minimización, residencia EEE y no reutilización del dato de SUMA. La conformidad ENI (NTIs, documento/expediente electrónico, firma, gestión documental y autocertificación) se trata en la **Epic E8 · Conformidad ENI**.",
+          "acceptance": [
+            "Mapa de controles ENS por dimensión documentado e implementado",
+            "EIPD y registro de actividades de tratamiento elaborados",
+            "Residencia EEE y políticas de retención/minimización verificadas",
+            "Conformidad ENI referida a la Epic E8 (autocertificación)"
+          ],
+          "prd_refs": [
+            "§5.5 Declaración de cumplimiento",
+            "ENI → Epic E8"
+          ],
+          "labels": [
+            "phase-1",
+            "area:security",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "E5.5 · Cifrado, identidades (Keycloak OIDC), RLS y auditoría",
+          "functional_md": "Los datos se cifran en reposo y en tránsito, el acceso se controla con SSO/MFA y roles, y todas las interacciones, accesos y cambios quedan registrados de forma inmutable conforme al ENS.",
+          "technical_md": "BUILD NEW: cifrado en reposo (AES-256/TDE; secretos en Key Vault/Vault), en tránsito (TLS 1.2/1.3, WSS, mTLS entre servicios). Keycloak realm SUMA; FastAPI valida JWT contra JWKS (verificar `iss`/`aud`), RBAC por `realm_access.roles` (dependencia `require_role`). PostgreSQL **RLS** por `set_config('app.current_tenant', …, true)` por transacción (no fuga en pools). Auditoría inmutable (Langfuse + logs Postgres/SIEM) con retención ENS.",
+          "acceptance": [
+            "Cifrado en reposo y en tránsito (TLS/mTLS) operativo",
+            "SSO Keycloak (OIDC) con MFA y RBAC por rol gateando rutas",
+            "RLS por transacción impide fuga cross-tenant en pools",
+            "Registro inmutable de interacciones/accesos/cambios con retención ENS"
+          ],
+          "prd_refs": [
+            "E5.3 (cifrado/identidades/auditoría)",
+            "§4.2 (tabla de seguridad)"
+          ],
+          "labels": [
+            "phase-2",
+            "area:security",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "L"
+        },
+        {
+          "title": "E5.6 · Seguridad específica de la IA (OWASP Top 10 LLM)",
+          "functional_md": "Un asistente RAG puede sufrir inyección de instrucciones (prompt injection, riesgo nº1 OWASP LLM); se aplica defensa en profundidad con mínimo privilegio, filtrado, separación de instrucciones y contenido, aprobación humana y pruebas adversariales.",
+          "technical_md": "BUILD NEW: mínimo privilegio en agentes/herramientas, separación de instrucciones vs contenido recuperado, filtrado de entrada/salida y de PII, guardarraíles y abstención (E2.6), aprobación humana para acciones sensibles (E4.1), detección de patrones anómalos. Red-teaming y fuzzing de prompts periódicos; SAST/DAST/SCA en CI/CD.",
+          "acceptance": [
+            "Mitigaciones de prompt injection y separación instrucciones/contenido aplicadas",
+            "Filtrado de PII y guardarraíles activos",
+            "Red-teaming/fuzzing de prompts ejecutado con hallazgos remediados",
+            "SAST/DAST/SCA integrados en CI/CD"
+          ],
+          "prd_refs": [
+            "§4.2 Seguridad específica de la IA (RAG)"
+          ],
+          "labels": [
+            "phase-2",
+            "area:security",
+            "type:feature",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E5.7 · Accesibilidad WCAG 2.1 AA",
+          "functional_md": "Las interfaces de usuario cumplen las pautas de accesibilidad del sector público (contraste, navegación por teclado, etiquetado ARIA, lectores de pantalla).",
+          "technical_md": "EXTEND el componente React (E3.2) y la consola admin: contraste AA, foco/teclado, roles/atributos ARIA, compatibilidad con lectores de pantalla. Auditoría automatizada (axe) en CI + revisión manual. Informe de conformidad WCAG 2.1 AA.",
+          "acceptance": [
+            "Auditoría axe sin incidencias críticas en CI",
+            "Navegación completa por teclado y compatibilidad con lector de pantalla",
+            "Informe de conformidad WCAG 2.1 AA entregado"
+          ],
+          "prd_refs": [
+            "E5.4 (interfaz accesible)",
+            "§4.3 Accesibilidad (WCAG 2.1 AA)"
+          ],
+          "labels": [
+            "phase-3",
+            "area:frontend",
+            "type:test",
+            "moscow:should"
+          ],
+          "milestone": "Fase 3 — Piloto y despliegue",
+          "estimate": "M"
+        },
+        {
+          "title": "E5.8 · Interoperabilidad con la infraestructura de SUMA (API-first, ENI)",
+          "functional_md": "La solución se integra con la infraestructura de SUMA sin acoplamientos, mediante una arquitectura API-first (REST/WebSocket) conforme al ENI, dejando las modificaciones de los portales propios a los proveedores web de SUMA.",
+          "technical_md": "Documentar y exponer la API (REST + WSS) con OpenAPI; conectores previstos (sede/Click2Chat, correo, telefonía) como hoja de ruta. Integrable con AD/LDAP de SUMA (futuro) vía Keycloak. SDK/snippet llave en mano para que el proveedor web embeba el asistente sin acceso al núcleo.",
+          "acceptance": [
+            "API documentada (OpenAPI) y SDK/snippet de integración disponible",
+            "Conectores de canal previstos documentados (hoja de ruta multicanal)",
+            "Integración con identidades de SUMA contemplada (Keycloak↔AD/LDAP)"
+          ],
+          "prd_refs": [
+            "E5.5 (interoperabilidad)",
+            "§4.3 Hoja de ruta multicanal"
+          ],
+          "labels": [
+            "phase-2",
+            "area:infra",
+            "type:docs",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E5.9 · Observabilidad: Langfuse autoalojado + métricas",
+          "functional_md": "Toda interacción y su evaluación quedan trazadas para supervisar calidad y anticipar picos, conforme a la trazabilidad y auditoría del ENS.",
+          "technical_md": "BUILD NEW Langfuse self-hosted (web+worker+ClickHouse+Postgres+Redis+Blob) en EEE. Integración por callback de LangChain en el grafo (`CallbackHandler`) + callback de LiteLLM a nivel de pasarela; mismas trazas correlacionadas. Prometheus/Grafana para métricas de servicio/vLLM. `obs/langfuse.py` (decoradores, prompt management versionado, scores).",
+          "acceptance": [
+            "Trazas por nodo del grafo + generaciones de la pasarela correlacionadas en Langfuse",
+            "Prompts versionados gestionados en Langfuse (mismos en eval y prod)",
+            "Métricas de servicio/vLLM en Grafana con alertas"
+          ],
+          "prd_refs": [
+            "§1.2 Observabilidad y evaluación",
+            "§4.3 Monitorización"
+          ],
+          "labels": [
+            "phase-2",
+            "area:observability",
+            "type:infra",
+            "moscow:must"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        }
+      ]
+    },
+    {
+      "key": "e6-delivery",
+      "title": "E6 · Entregables, QA, piloto, formación y soporte",
+      "summary_md": "Cierre y puesta en marcha: **documentación técnica y manuales**, **pruebas de aceptación** (funcionales, de calidad por rúbricas, seguridad y carga) e **informe de validación**, **piloto controlado** y despliegue progresivo, **formación (30 jornadas)** y plan de **devolución del servicio**, y **soporte post-implantación (12 sem, ≤4 h)** con jornada presencial semanal en Alicante.",
+      "labels": [
+        "epic",
+        "phase-3",
+        "area:docs"
+      ],
+      "milestone": "Fase 3 — Piloto y despliegue",
+      "prd_refs": [
+        "E6.1",
+        "E6.2",
+        "E6.3",
+        "E6.4",
+        "E6.5",
+        "§5.2 Plan de prestación",
+        "§5.4 Entregables"
+      ],
+      "blocks": [
+        {
+          "type": "image",
+          "title": "Figura 10 — Cronograma (17 sem + 12 de soporte)",
+          "src": "assets/fig10-gantt.png"
+        }
+      ],
+      "issues": [
+        {
+          "title": "E6.1 · Documentación técnica y manuales",
+          "functional_md": "Se entregan, versionados y reutilizables: documentación de diseño y arquitectura, manuales de usuario y de operación, plan de despliegue, código y configuración, el modelo y el árbol de conocimiento.",
+          "technical_md": "Consolidar `docs/`: diseño/arquitectura (ADRs), manual de usuario (uso del asistente y verificación de respuestas), manual de administrador (gestión documental y cuadros de mando), manual de operación (despliegue, escalado, runbooks), plan de despliegue híbrido y estimación de coste (cloud y on-premise). Export de modelo/árbol en formatos estándar.",
+          "acceptance": [
+            "Documentación de diseño/arquitectura, usuario, admin y operación entregada",
+            "Plan de despliegue híbrido + estimación de coste (cloud/on-premise)",
+            "Todo versionado y en formatos reutilizables"
+          ],
+          "prd_refs": [
+            "E6.1 (documentación y manuales)",
+            "§5.4 Idoneidad de la relación de entregables"
+          ],
+          "labels": [
+            "phase-3",
+            "area:docs",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 3 — Piloto y despliegue",
+          "estimate": "M"
+        },
+        {
+          "title": "E6.2 · Pruebas de aceptación e informe de validación (UAT)",
+          "functional_md": "Se ejecuta un plan de pruebas con criterios acordados con SUMA —funcionales, de calidad (golden set y rúbricas), seguridad y carga, y UAT— y la validación de fase se sujeta a la aprobación del informe de pruebas.",
+          "technical_md": "Ejecutar la batería del marco de evaluación (E2.10) + pruebas de seguridad (pentest) + carga. Criterios medibles: ≥95% de respuestas con fuente correcta, objetivo de exactitud por idioma, latencia media < 3 s, cero incidencias críticas abiertas. Informe de validación y registro de UAT.",
+          "acceptance": [
+            "Plan de pruebas con criterios acordados ejecutado (funcional/calidad/seguridad/carga)",
+            "≥95% de respuestas con fuente correcta y latencia media < 3 s verificados",
+            "UAT superada y informe de validación aprobado por SUMA",
+            "Cero incidencias críticas abiertas"
+          ],
+          "prd_refs": [
+            "E6.2 (pruebas de aceptación)",
+            "§5.4 Metodología de las pruebas de aceptación"
+          ],
+          "labels": [
+            "phase-3",
+            "area:eval",
+            "type:test",
+            "moscow:must"
+          ],
+          "milestone": "Fase 3 — Piloto y despliegue",
+          "estimate": "L"
+        },
+        {
+          "title": "E6.3 · Piloto controlado, demostración funcional y despliegue progresivo",
+          "functional_md": "Se realiza un piloto controlado con personal de SUMA y una demostración funcional en entorno operativo que recorre todos los requisitos del pliego, seguido de un despliegue progresivo.",
+          "technical_md": "Plan de piloto con grupo acotado, recogida de feedback (E4.3) y métricas (E4.2). Demostración funcional: consulta en lenguaje natural (texto y voz), multilingüe (ES/VAL/EN), respuestas verificables con cita, búsqueda semántica, monitorización/determinismo y un caso de automatización supervisada. Despliegue progresivo con criterios de salida.",
+          "acceptance": [
+            "Piloto controlado ejecutado con feedback y métricas recogidos",
+            "Demostración funcional cubre todos los requisitos del pliego",
+            "Despliegue progresivo con criterios de salida cumplidos"
+          ],
+          "prd_refs": [
+            "E6.3 (piloto y despliegue)",
+            "§5.4 Calidad de la demostración funcional"
+          ],
+          "labels": [
+            "phase-3",
+            "area:docs",
+            "type:test",
+            "moscow:must"
+          ],
+          "milestone": "Fase 3 — Piloto y despliegue",
+          "estimate": "M"
+        },
+        {
+          "title": "E6.4 · Formación (30 jornadas) y devolución del servicio",
+          "functional_md": "Se forma a administradores (gestión documental y cuadros de mando) y a usuarios finales (uso del asistente y verificación de respuestas) en 30 jornadas, y se prepara el plan de devolución de datos y conocimiento.",
+          "technical_md": "Plan de formación (30 jornadas) con materiales. Entrega de datos, árbol de conocimiento, configuración, glosario y modelos en formatos estándar y reutilizables. Plan de transferencia de conocimiento. Procedimiento de destrucción de información (apartado 10) con certificado de borrado seguro al cierre.",
+          "acceptance": [
+            "30 jornadas de formación impartidas (administradores + usuarios finales)",
+            "Datos, árbol, configuración, glosario y modelos entregados en formatos estándar",
+            "Plan de transferencia y procedimiento de destrucción/borrado seguro documentados"
+          ],
+          "prd_refs": [
+            "E6.4 (formación y devolución)",
+            "§5.2 Plan de devolución del servicio"
+          ],
+          "labels": [
+            "phase-3",
+            "area:docs",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 3 — Piloto y despliegue",
+          "estimate": "M"
+        },
+        {
+          "title": "E6.5 · Soporte post-implantación (12 sem, ≤4 h) y presencialidad",
+          "functional_md": "Tras la puesta en marcha se presta soporte durante 12 semanas con asistencia telefónica/remota/presencial y tiempo de respuesta máximo de 4 horas, además de la actualización y optimización de los modelos y 1 jornada presencial semanal.",
+          "technical_md": "Operar el SLA (L-V 08:00–15:00, ≤4 h) con cola de incidencias y severidades acordadas. Actualización periódica del corpus (re-indexado incremental E1.9) y de modelos (con gate de eval E2.10). Mejora continua (detección→automatización→validación). Informes de soporte y 1 jornada presencial/semana en Alicante.",
+          "acceptance": [
+            "SLA de soporte ≤4 h operativo con cola de incidencias",
+            "Actualización de corpus/modelos con validación por eval antes de promoción",
+            "Informes de soporte periódicos y presencialidad semanal cubierta",
+            "Ciclo de mejora continua en marcha"
+          ],
+          "prd_refs": [
+            "E6.5 (soporte post-implantación)",
+            "§5.5 Acuerdo de nivel de servicio (SLA)"
+          ],
+          "labels": [
+            "phase-support",
+            "area:docs",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Soporte post-implantación",
+          "estimate": "L"
+        }
+      ]
+    },
+    {
+      "key": "e7-evolution",
+      "title": "E7 · Evolución — gestión documental, aprendizaje instantáneo, analítica e integraciones",
+      "summary_md": "Capacidades de alto valor para la operación continua: **panel de gestión documental** (subir, versionar, retirar, reingestar), **aprendizaje instantáneo** (el feedback reorganiza el índice), **analítica e insights**, e **integraciones** con endpoints/servicios externos. Se apoyan en el re-indexado incremental (E1.9) y el bucle de aprendizaje (E4.3).",
+      "labels": [
+        "epic",
+        "phase-support",
+        "area:automation",
+        "area:data"
+      ],
+      "milestone": "Fase 2 — Entrenamiento y uso interno",
+      "prd_refs": [
+        "E7.1",
+        "E7.2",
+        "E7.3",
+        "E7.4",
+        "§4.3 Aprendizaje supervisado",
+        "§4.3 Gestión documental"
+      ],
+      "blocks": [
+        {
+          "type": "image",
+          "title": "Figura 8 — Consola · Gestión documental",
+          "src": "assets/fig8-doc-management.png"
+        }
+      ],
+      "issues": [
+        {
+          "title": "E7.1 · Panel de gestión documental",
+          "functional_md": "Panel para subir, versionar y retirar documentos, con reingesta incremental e interpretación multimodal de tablas y gráficos, de modo que SUMA mantenga el corpus actualizado de forma ágil.",
+          "technical_md": "BUILD NEW vista admin (React) sobre tools `ingest_document`/`update_document_metadata`/`delete_document`/`manage_collection` (gateadas por `interrupt_on`). Estados Indexado/Procesando, versionado por documento, reingesta (E1.9), indicador multimodal (E1.3). Sub-agent `ingestion-agent` separado del camino ciudadano.",
+          "acceptance": [
+            "Subir/versionar/retirar documentos desde el panel con aprobación humana",
+            "Estado de indexación (Indexado/Procesando) y versión por documento visibles",
+            "Reingesta incremental e interpretación multimodal disponibles desde el panel"
+          ],
+          "prd_refs": [
+            "E7.1 (panel de gestión documental)",
+            "§4.3 Gestión documental",
+            "Figura 8"
+          ],
+          "labels": [
+            "phase-2",
+            "area:automation",
+            "area:frontend",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E7.2 · Aprendizaje instantáneo (el feedback reorganiza el índice)",
+          "functional_md": "Las correcciones del personal se traducen en mejoras inmediatas del conocimiento (reordenar nodos, añadir aclaraciones, corregir referencias) sin re-troceado ni re-embebido global, con control de versiones y aprobación de SUMA.",
+          "technical_md": "EXTEND el re-indexado incremental (E1.9) y el bucle de aprendizaje (E4.3): aplicar correcciones a nivel de nodo del árbol (reordenar/añadir/corregir) de forma explícita y auditable, con `corpus_version` e invalidación de caché. Diferencial vs embeddings: no recalcula vectores ni sufre deriva.",
+          "acceptance": [
+            "Una corrección aprobada reorganiza nodos del árbol sin reprocesar todo el corpus",
+            "Cambios explícitos, versionados y auditables (qué nodo/fuente cambió)",
+            "Caché invalidada y corpus_version actualizado tras la corrección"
+          ],
+          "prd_refs": [
+            "E7.2 (aprendizaje instantáneo)",
+            "§4.3 Aprendizaje supervisado (corpus vivo)"
+          ],
+          "labels": [
+            "phase-2",
+            "area:automation",
+            "area:data",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Fase 2 — Entrenamiento y uso interno",
+          "estimate": "M"
+        },
+        {
+          "title": "E7.3 · Analítica e insights",
+          "functional_md": "Cuadros analíticos que revelan temas más frecuentes, huecos de conocimiento, distribución por idioma y deriva de calidad, para orientar la mejora continua y la priorización de automatizaciones.",
+          "technical_md": "EXTEND dashboards (E4.2): analítica agregada sobre trazas Langfuse (temas, huecos, idiomas, deriva). Exportes/informes (catálogo de informes del PRD: seguimiento, fase, calidad/KPIs, incidencias/SLA). Señales que alimentan el ciclo de mejora y la priorización de trámites a automatizar.",
+          "acceptance": [
+            "Analítica de temas frecuentes, huecos e idiomas disponible",
+            "Detección de deriva de calidad con alertas",
+            "Informes del catálogo (seguimiento/fase/calidad/SLA) generables"
+          ],
+          "prd_refs": [
+            "E7.3 (analítica e insights)",
+            "§5.1 Catálogo de informes"
+          ],
+          "labels": [
+            "phase-support",
+            "area:observability",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Soporte post-implantación",
+          "estimate": "M"
+        },
+        {
+          "title": "E7.4 · Integraciones con endpoints/servicios externos",
+          "functional_md": "El asistente puede integrarse con sistemas de terceros y servicios externos de SUMA como capacidad evolutiva, manteniendo la supervisión humana en las acciones con efectos.",
+          "technical_md": "BUILD NEW adaptadores de integración (API) y, para acciones con efectos, la tool `run_automation_action` gateada por HITL (E4.1). Catálogo de integraciones a concretar con SUMA. Conforme a interoperabilidad API-first/ENI (E5.8).",
+          "acceptance": [
+            "Adaptador de integración externa operativo en pruebas",
+            "Acciones con efectos sobre sistemas externos gateadas por aprobación humana",
+            "Documentado como capacidad evolutiva, conforme a ENI"
+          ],
+          "prd_refs": [
+            "E7.4 (integraciones externas)"
+          ],
+          "labels": [
+            "phase-support",
+            "area:automation",
+            "type:feature",
+            "moscow:could"
+          ],
+          "milestone": "Soporte post-implantación",
+          "estimate": "M"
+        },
+        {
+          "title": "E7.5 · Memoria del agente + agente de auto-corrección (remediación supervisada)",
+          "functional_md": "Cuando un revisor de SUMA marca una respuesta como incorrecta y pulsa «Auto-corregir», un agente de remediación investiga por qué falló, propone un plan de corrección concreto y —solo tras la validación humana— lo aplica. Las correcciones pueden incluir: añadir una memoria/aclaración al agente, reingestar el documento relevante, añadir un sinónimo al tesauro, añadir una plantilla de respuesta o cachear la respuesta corregida. El revisor también puede ver y gestionar las memorias del agente.",
+          "technical_md": "BUILD NEW un **sub-agente de remediación** (deepagents, contexto aislado) que se dispara desde la cola de aprendizaje (E4.3, caja «auto-corrección» de la fig9). Tools: `investigate_answer` (re-ejecuta recuperación + groundedness sobre la consulta fallida para diagnosticar la causa), `add_memory`/`list_memories`/`delete_memory` (memoria de largo plazo del agente vía `BaseStore` de deepagents sobre tabla PostgreSQL `agent_memory` con RLS; consultada por el agente al responder y navegable en la consola admin), `add_thesaurus_variant` (E2.4), `add_answer_template`, `cache_validated_answer` (E2.7) y `reingest_document` (re-ingesta de documento completo vía cliente E1 — soportado por la API actual). El sub-agente devuelve un `RemediationPlan` (acciones + justificación) que la UI admin muestra; **todas las acciones con efecto se gatean por `interrupt_on` (HITL): nada se aplica sin aprobación humana**. Auditoría de cada remediación. DEPENDENCIA: el re-resumen a nivel de nodo / reindexado incremental de un solo nodo («re-hacer el árbol / resúmenes de chunks» sin reingerir el documento entero) vive en pageindexomniloy (OFF-LIMITS) y corresponde a la issue #16 (E1.9) pendiente de PR de backend; hasta entonces la remediación usa re-ingesta de documento completo.",
+          "acceptance": [
+            "«Auto-corregir» produce un plan de remediación propuesto que el revisor debe aprobar antes de aplicar nada",
+            "add_memory/list_memories operan; las memorias son visibles en la consola admin y las consulta el agente",
+            "La remediación aprobada (memoria / tesauro / plantilla / caché / re-ingesta) se aplica y queda auditada; nada se aplica sin validación humana",
+            "Tras la remediación, re-ejecutar la consulta fallida devuelve la respuesta corregida y fundamentada",
+            "Re-resumen a nivel de nodo señalado como dependiente del PR de backend (#16) — la versión SonIA usa re-ingesta completa"
+          ],
+          "prd_refs": [
+            "E7.2 (aprendizaje instantáneo)",
+            "E4.3 (bucle de aprendizaje supervisado)",
+            "§4.3 Aprendizaje supervisado",
+            "Figura 9"
+          ],
+          "labels": [
+            "phase-support",
+            "area:automation",
+            "area:rag",
+            "type:feature",
+            "moscow:should"
+          ],
+          "milestone": "Soporte post-implantación",
+          "estimate": "L"
+        }
+      ]
+    },
+    {
+      "key": "e8-eni",
+      "title": "E8 · Conformidad ENI (autocertificación)",
+      "summary_md": "Autocertificación del **Esquema Nacional de Interoperabilidad** (RD 4/2010, act. RD 203/2021) acotada a SonIA. El ENI puede **autocertificarse** (declaración responsable). Esta Epic produce, en `docs/eni/`, los documentos NÚCLEO del checklist de autocertificación y la **Declaración de conformidad** firmable. Alcance Fase 1 = **uso interno**: se producen ya los núcleo aplicables (catálogo de estándares, metadatos/e-EMGDE, formatos, gestión documental, inventario e interoperabilidad); **Expediente electrónico, copiado auténtico, digitalización y firma longeva** se entregan como **plantillas** y se activan con la gestión de expedientes (evolución). Evidencias con PKI real (muestra firmada, validación @firma) y la firma de la declaración se marcan **needs-human**. NTIs extra (SICRES/SARA/SCSP/RISP) = N/A en alcance interno.",
+      "labels": [
+        "epic",
+        "phase-1",
+        "area:security",
+        "area:docs"
+      ],
+      "milestone": "Fase 1 — Planificación y conocimiento",
+      "prd_refs": [
+        "§5.5 Conformidad con el ENI",
+        "Checklist_ENI_Autocertificacion.xlsx",
+        "RD 4/2010 · RD 203/2021"
+      ],
+      "blocks": [
+        {
+          "type": "callout",
+          "tone": "info",
+          "title": "Alcance ENI (núcleo ahora · resto plantilla)",
+          "body_md": "Núcleo aplicable a uso interno: **G** (general), **CE** (catálogo de estándares), **DE** (documento electrónico), **PF** (política de firma — spec), **PG** (gestión documental). Diferido a evolución (plantillas): **EE** (expediente), **CC** (copiado auténtico), **DI** (digitalización), firma longeva/LTV. **needs-human/PKI:** EV1 muestra firmada, EV3 validación @firma, certificados (PF-04) y la firma de la Declaración (OUT)."
+        }
+      ],
+      "issues": [
+        {
+          "title": "E8.1 · Catálogo de formatos y estándares admitidos (NTI Catálogo de estándares)",
+          "functional_md": "Define qué formatos y estándares abiertos admite SonIA para producir e intercambiar documentos y datos, conforme al Catálogo de estándares del ENI (núcleo, aplicable ya).",
+          "technical_md": "BUILD NEW `docs/eni/catalogo-formatos.md`: lista de formatos de documento (PDF/PDF-A, XML, ODF, TXT, CSV) y multimedia (PNG/JPEG/TIFF, PDF/A para escaneado) admitidos, mapeados al catálogo ENI (CE-01/02/03 → D05). Vincular a la validación de formatos en ingesta/exportación. Marca `[needs-human]` la verificación de referencias BOE.",
+          "acceptance": [
+            "docs/eni/catalogo-formatos.md presente con formatos de documento y multimedia mapeados al catálogo ENI",
+            "Sólo se admiten formatos del catálogo en producción/intercambio (regla documentada)",
+            "Referencias normativas (BOE) señaladas para verificación humana"
+          ],
+          "prd_refs": [
+            "§5.5 Catálogo de estándares (CE-01..03)",
+            "D05"
+          ],
+          "labels": [
+            "phase-1",
+            "area:docs",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "S"
+        },
+        {
+          "title": "E8.2 · Esquema de metadatos mínimos ENI + mapeo e-EMGDE (NTI Documento electrónico)",
+          "functional_md": "Define los metadatos mínimos obligatorios de todo documento electrónico (Versión NTI, Identificador, Órgano DIR3, Fecha de captura, Origen, Estado de elaboración) y su mapeo al e-EMGDE (núcleo, aplicable ya).",
+          "technical_md": "BUILD NEW `docs/eni/metadatos-eni.md` + esquema (JSON/XSD) con los 6 mínimos (DE-02) y la tabla de valores de Estado de elaboración (DE-03: Original / Copia auténtica con cambio de formato / … ); mapeo a e-EMGDE (PG-04 → D04). `Órgano` con marcador DIR3 a cumplimentar por SUMA `[needs-human]`.",
+          "acceptance": [
+            "6 metadatos mínimos definidos y mapeados a e-EMGDE",
+            "Tabla de valores de Estado de elaboración aplicada",
+            "Identificador DIR3 del órgano marcado como dato a aportar por SUMA"
+          ],
+          "prd_refs": [
+            "§5.5 Documento electrónico (DE-02/03)",
+            "D04"
+          ],
+          "labels": [
+            "phase-1",
+            "area:docs",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "E8.3 · Especificación del documento electrónico ENI + ejemplo XML (NTI Documento electrónico)",
+          "functional_md": "Especifica la estructura del documento electrónico ENI (contenido + firma(s) + metadatos) con un ejemplo XML, para que los documentos gestionados por SonIA sean conformes (núcleo; spec ya, firma real diferida).",
+          "technical_md": "BUILD NEW `docs/eni/documento-electronico.md` + `docs/eni/ejemplos/documento.xml` conforme a la estructura ENI (DE-01..05 → D08). Incluye el bloque de firma referenciado a la política E8.4; el documento administrativo debe llevar ≥1 firma (DE-05). La generación de una firma real de muestra (EV1) se realiza en E8.4 `[needs-human/PKI]`.",
+          "acceptance": [
+            "docs/eni/documento-electronico.md + ejemplo XML conforme a la estructura ENI (contenido+firma+metadatos)",
+            "Requisito de ≥1 firma por documento administrativo documentado",
+            "Ejemplo XML valida contra el esquema de metadatos (E8.2)"
+          ],
+          "prd_refs": [
+            "§5.5 Documento electrónico (DE-01..05)",
+            "D08"
+          ],
+          "labels": [
+            "phase-1",
+            "area:docs",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "E8.4 · Política de firma electrónica y certificados (NTI Política de firma)",
+          "functional_md": "Establece la política de firma de SonIA (propia o adhesión a la de la AGE), los formatos de firma admitidos (XAdES/CAdES/PAdES), los certificados aceptados y la validación de firmas (núcleo; spec ya, evidencias PKI diferidas).",
+          "technical_md": "BUILD NEW `docs/eni/politica-firma.md` (PF-01) + tabla de certificados admitidos y prestadores de confianza (PF-04 → D07) + spec de formatos XAdES/CAdES/PAdES (PF-02) + procedimiento de sello de tiempo / firma longeva LTV-A (PF-03) + procedimiento de validación @firma/VALIDe (PF-05). EV1 (muestra firmada PAdES/XAdES) y EV3 (informe de validación) requieren certificados reales → `[needs-human/PKI]` (plantilla + hueco de evidencia).",
+          "acceptance": [
+            "Política de firma + formatos XAdES/CAdES/PAdES + tabla de certificados documentados",
+            "Procedimientos de sello de tiempo/firma longeva y de validación (@firma/VALIDe) descritos",
+            "EV1 muestra firmada y EV3 informe de validación marcados needs-human/PKI con plantilla"
+          ],
+          "prd_refs": [
+            "§5.5 Política de firma (PF-01..05)",
+            "D06",
+            "D07",
+            "EV1",
+            "EV3"
+          ],
+          "labels": [
+            "phase-1",
+            "area:docs",
+            "type:docs",
+            "moscow:should"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "E8.5 · Política de gestión documental (PGDE): clasificación, conservación y roles (NTI Gestión documental)",
+          "functional_md": "Aprueba la política de gestión de documentos electrónicos que cubre todo el ciclo de vida, con cuadro de clasificación funcional, calendario de conservación/valoración y roles de gestión (núcleo, aplicable ya).",
+          "technical_md": "BUILD NEW `docs/eni/pgde.md` (PG-01 → D01), `docs/eni/cuadro-clasificacion.md` (PG-02 → D02), `docs/eni/calendario-conservacion.md` (PG-03 → D03), `docs/eni/roles-gestion-documental.md` (PG-05). Metadatos de gestión e-EMGDE asignados en el ciclo de vida (PG-04, enlaza E8.2). Plazos de conservación a acordar con SUMA `[needs-human]`.",
+          "acceptance": [
+            "PGDE, cuadro de clasificación, calendario de conservación y matriz de roles presentes en docs/eni/",
+            "Asignación de metadatos e-EMGDE en el ciclo de vida documentada",
+            "Plazos de conservación señalados para acuerdo con SUMA"
+          ],
+          "prd_refs": [
+            "§5.5 Gestión documental (PG-01..05)",
+            "D01",
+            "D02",
+            "D03"
+          ],
+          "labels": [
+            "phase-1",
+            "area:docs",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "E8.6 · Requisitos generales ENI: inventario, interoperabilidad y conservación a largo plazo",
+          "functional_md": "Cubre los requisitos generales del ENI: inventario de sistemas/servicios interoperables, condiciones de interoperabilidad organizativa/semántica/técnica (DIR3, modelos de datos comunes, estándares abiertos) y conservación/recuperación a largo plazo (núcleo, aplicable ya).",
+          "technical_md": "BUILD NEW `docs/eni/inventario-sistemas.md` (G-01 → D12), `docs/eni/interoperabilidad.md` (G-02/03/04: catálogo de servicios, uso de DIR3, modelos de datos comunes, estándares/protocolos abiertos) y `docs/eni/plan-conservacion.md` (G-05 → D13: preservación a largo plazo, firma y metadatos). Relación de modelos de datos (EX-05/G-03 → D14) como apoyo.",
+          "acceptance": [
+            "Inventario de sistemas/servicios interoperables documentado",
+            "Condiciones de interoperabilidad (DIR3, modelos de datos, estándares abiertos) descritas",
+            "Plan de conservación y recuperación a largo plazo presente"
+          ],
+          "prd_refs": [
+            "§5.5 Requisitos generales (G-01..05)",
+            "D12",
+            "D13"
+          ],
+          "labels": [
+            "phase-1",
+            "area:docs",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 1 — Planificación y conocimiento",
+          "estimate": "M"
+        },
+        {
+          "title": "(Plantilla · evolución) E8.7 · Expediente electrónico, copiado auténtico y digitalización",
+          "functional_md": "DIFERIDO a la evolución (gestión de expedientes). Se entregan ya como PLANTILLAS la especificación del expediente electrónico (índice firmado, foliado, huellas, metadatos, paquete de intercambio), el copiado auténtico/conversión y la digitalización; se activan cuando SonIA gestione expedientes.",
+          "technical_md": "BUILD NEW (plantillas) `docs/eni/expediente-electronico.md` + ejemplos `ejemplos/indice.xml`, `ejemplos/firma_indice.xml`, `ejemplos/metadatos.xml` (EE-01..05 → D09, paquete EV2), `docs/eni/copiado-autentico.md` (CC-01..03 → D10) y `docs/eni/digitalizacion.md` (DI-01..03 → D11, condicional). Marcado claramente `[diferido: activa con gestión de expedientes]`; firma del índice (XAdES) y paquetes reales `[needs-human/PKI]`.",
+          "acceptance": [
+            "Plantillas de expediente (índice/firma/metadatos), copiado auténtico y digitalización en docs/eni/",
+            "Ejemplos XML de índice/foliado/huellas incluidos",
+            "Marcadas como diferidas (se activan con la gestión de expedientes) y firma real flagged needs-human"
+          ],
+          "prd_refs": [
+            "§5.5 Expediente electrónico (EE)",
+            "Copiado/Conversión (CC)",
+            "Digitalización (DI)",
+            "D09",
+            "D10",
+            "D11",
+            "EV2"
+          ],
+          "labels": [
+            "phase-support",
+            "area:docs",
+            "type:docs",
+            "moscow:should"
+          ],
+          "milestone": "Soporte post-implantación",
+          "estimate": "M"
+        },
+        {
+          "title": "E8.8 · Checklist cumplimentado y Declaración de conformidad ENI (autocertificación)",
+          "functional_md": "Reúne el checklist de autocertificación cumplimentado (con enlaces a la evidencia) y produce la Declaración responsable de conformidad ENI acotada a SonIA, lista para firma. La firma de la declaración es una acción humana.",
+          "technical_md": "BUILD NEW `docs/eni/checklist-eni.md` (mapea cada requisito G/CE/DE/EE/PF/PG/CC/DI a Sí/Parcial/N/A con enlace a la evidencia producida en E8.1–E8.7) y `docs/eni/declaracion-conformidad-eni.md` (plantilla de declaración responsable, alcance = SonIA uso interno). La firma de la Declaración (OUT) y la verificación final del alcance son `[needs-human]`. Las NTIs extra (SICRES/SARA/SCSP/RISP) se marcan N/A.",
+          "acceptance": [
+            "Checklist cumplimentado con estado y enlaces a la evidencia de E8.1–E8.7",
+            "Declaración de conformidad ENI (alcance SonIA) lista para firma",
+            "NTIs extra marcadas N/A; firma de la declaración marcada needs-human"
+          ],
+          "prd_refs": [
+            "§5.5 Conformidad ENI",
+            "OUT (autocertificación)"
+          ],
+          "labels": [
+            "phase-3",
+            "area:docs",
+            "type:docs",
+            "moscow:must"
+          ],
+          "milestone": "Fase 3 — Piloto y despliegue",
+          "estimate": "M"
+        }
+      ]
+    }
+  ]
+}

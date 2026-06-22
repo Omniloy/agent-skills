@@ -1,0 +1,278 @@
+{
+  "E0 \u00b7 Arranque, gobernanza y plataforma base": {
+    "number": 1,
+    "url": "https://github.com/Omniloy/SonIA/issues/1"
+  },
+  "E0.1 \u00b7 Arranque, gobernanza y toma de requisitos": {
+    "number": 2,
+    "url": "https://github.com/Omniloy/SonIA/issues/2"
+  },
+  "E0.2 \u00b7 Confidencialidad (NDA) y POC de seguridad": {
+    "number": 3,
+    "url": "https://github.com/Omniloy/SonIA/issues/3"
+  },
+  "E0.3 \u00b7 Ingesta segura del \u00abTexto Refundido\u00bb y arranque del corpus": {
+    "number": 4,
+    "url": "https://github.com/Omniloy/SonIA/issues/4"
+  },
+  "E0.4 \u00b7 Arquitectura t\u00e9cnica inicial y ADRs (documentaci\u00f3n t\u00e9cnica inicial)": {
+    "number": 5,
+    "url": "https://github.com/Omniloy/SonIA/issues/5"
+  },
+  "E0.5 \u00b7 Acceso a modelos OpenAI (Fase 1) v\u00eda capa compatible": {
+    "number": 6,
+    "url": "https://github.com/Omniloy/SonIA/issues/6"
+  },
+  "E1 \u00b7 Ingesta y estructuraci\u00f3n del corpus (PageIndex)": {
+    "number": 7,
+    "url": "https://github.com/Omniloy/SonIA/issues/7"
+  },
+  "E1.1 \u00b7 Migrar el store de PageIndex a PostgreSQL + pgvector (RLS/RBAC)": {
+    "number": 8,
+    "url": "https://github.com/Omniloy/SonIA/issues/8"
+  },
+  "E1.2 \u00b7 Ingesta y estructuraci\u00f3n del \u00abTexto Refundido\u00bb (.docx, ~800 p\u00e1gs.)": {
+    "number": 9,
+    "url": "https://github.com/Omniloy/SonIA/issues/9"
+  },
+  "E1.3 \u00b7 Ingesta multimodal de tablas, gr\u00e1ficos y figuras (VLM)": {
+    "number": 10,
+    "url": "https://github.com/Omniloy/SonIA/issues/10"
+  },
+  "E1.4 \u00b7 Ingesta de normativa, circulares y manuales internos (multi-documento)": {
+    "number": 11,
+    "url": "https://github.com/Omniloy/SonIA/issues/11"
+  },
+  "E1.5 \u00b7 Anclaje de citas en el contrato de recuperaci\u00f3n": {
+    "number": 12,
+    "url": "https://github.com/Omniloy/SonIA/issues/12"
+  },
+  "E1.6 \u00b7 Verificaci\u00f3n de calidad del \u00e1rbol (cobertura, granularidad, integridad)": {
+    "number": 13,
+    "url": "https://github.com/Omniloy/SonIA/issues/13"
+  },
+  "E1.7 \u00b7 B\u00fasqueda a nivel de colecci\u00f3n (PageIndex File System)": {
+    "number": 14,
+    "url": "https://github.com/Omniloy/SonIA/issues/14"
+  },
+  "E1.8 \u00b7 Ingesta as\u00edncrona (cola de trabajos) para documentos grandes": {
+    "number": 15,
+    "url": "https://github.com/Omniloy/SonIA/issues/15"
+  },
+  "E1.9 \u00b7 Re-indexado incremental y versionado del corpus (corpus vivo)": {
+    "number": 16,
+    "url": "https://github.com/Omniloy/SonIA/issues/16"
+  },
+  "E2 \u00b7 N\u00facleo RAG razonado \u2014 deep agent (deepagents + LangGraph)": {
+    "number": 17,
+    "url": "https://github.com/Omniloy/SonIA/issues/17"
+  },
+  "E2.1 \u00b7 Orquestador deepagents + m\u00e1quina de estados LangGraph": {
+    "number": 18,
+    "url": "https://github.com/Omniloy/SonIA/issues/18"
+  },
+  "E2.2 \u00b7 Herramientas de tree-search + sub-agent de recuperaci\u00f3n": {
+    "number": 19,
+    "url": "https://github.com/Omniloy/SonIA/issues/19"
+  },
+  "E2.3 \u00b7 Comprensi\u00f3n de consulta: idioma, intenci\u00f3n, correferencia y descomposici\u00f3n": {
+    "number": 20,
+    "url": "https://github.com/Omniloy/SonIA/issues/20"
+  },
+  "E2.4 \u00b7 Tesauro/ontolog\u00eda fiscal: normalizaci\u00f3n y expansi\u00f3n de consulta": {
+    "number": 21,
+    "url": "https://github.com/Omniloy/SonIA/issues/21"
+  },
+  "E2.5 \u00b7 Respuestas con cita y enlace a la fuente": {
+    "number": 22,
+    "url": "https://github.com/Omniloy/SonIA/issues/22"
+  },
+  "E2.6 \u00b7 Control de alucinaciones: verificaci\u00f3n de fundamentaci\u00f3n y abstenci\u00f3n": {
+    "number": 23,
+    "url": "https://github.com/Omniloy/SonIA/issues/23"
+  },
+  "E2.7 \u00b7 Determinismo: temperatura/semilla, cach\u00e9 validada y plantillas": {
+    "number": 24,
+    "url": "https://github.com/Omniloy/SonIA/issues/24"
+  },
+  "E2.8 \u00b7 Multiling\u00fce ES / Valenci\u00e0 / EN (texto)": {
+    "number": 25,
+    "url": "https://github.com/Omniloy/SonIA/issues/25"
+  },
+  "(Fase posterior) E2.9 \u00b7 Fine-tuning del modelo open-weights (Qwen, incl. valenciano)": {
+    "number": 26,
+    "url": "https://github.com/Omniloy/SonIA/issues/26"
+  },
+  "E2.10 \u00b7 Marco de evaluaci\u00f3n: golden set + LLM-as-judge (r\u00fabricas) + gating": {
+    "number": 27,
+    "url": "https://github.com/Omniloy/SonIA/issues/27"
+  },
+  "E3 \u00b7 Canales \u2014 web embebible, voz (ASR), chat en vivo y correo": {
+    "number": 28,
+    "url": "https://github.com/Omniloy/SonIA/issues/28"
+  },
+  "E3.1 \u00b7 Capa de streaming FastAPI (WSS): tokens y eventos de razonamiento": {
+    "number": 29,
+    "url": "https://github.com/Omniloy/SonIA/issues/29"
+  },
+  "E3.2 \u00b7 Chatbot web interno embebible (web component, accesible)": {
+    "number": 30,
+    "url": "https://github.com/Omniloy/SonIA/issues/30"
+  },
+  "E3.3 \u00b7 Consultas habladas (ASR streaming, ES/VAL/EN)": {
+    "number": 31,
+    "url": "https://github.com/Omniloy/SonIA/issues/31"
+  },
+  "E3.4 \u00b7 Chat en vivo con escalado a agente humano": {
+    "number": 32,
+    "url": "https://github.com/Omniloy/SonIA/issues/32"
+  },
+  "E3.5 \u00b7 Canal de correo electr\u00f3nico (preparado / hoja de ruta)": {
+    "number": 33,
+    "url": "https://github.com/Omniloy/SonIA/issues/33"
+  },
+  "E4 \u00b7 Automatizaci\u00f3n supervisada, cuadros de mando y aprendizaje": {
+    "number": 34,
+    "url": "https://github.com/Omniloy/SonIA/issues/34"
+  },
+  "E4.1 \u00b7 Automatizaci\u00f3n de tr\u00e1mites supervisada (human-in-the-loop)": {
+    "number": 35,
+    "url": "https://github.com/Omniloy/SonIA/issues/35"
+  },
+  "E4.2 \u00b7 Cuadros de mando de procesos y determinismo": {
+    "number": 36,
+    "url": "https://github.com/Omniloy/SonIA/issues/36"
+  },
+  "E4.3 \u00b7 Bucle de aprendizaje supervisado (valoraci\u00f3n y correcci\u00f3n)": {
+    "number": 37,
+    "url": "https://github.com/Omniloy/SonIA/issues/37"
+  },
+  "E5 \u00b7 Despliegue h\u00edbrido, infraestructura, seguridad y cumplimiento": {
+    "number": 38,
+    "url": "https://github.com/Omniloy/SonIA/issues/38"
+  },
+  "E5.1 \u00b7 Empaquetado del agente en contenedor Docker (Fase 1)": {
+    "number": 39,
+    "url": "https://github.com/Omniloy/SonIA/issues/39"
+  },
+  "(Fase posterior) E5.2 \u00b7 Servido del modelo open-weights con vLLM (Qwen, FP8/INT8/AWQ, KV-FP8, MTP)": {
+    "number": 40,
+    "url": "https://github.com/Omniloy/SonIA/issues/40"
+  },
+  "(Fase posterior) E5.3 \u00b7 Kubernetes, IaC (OpenTofu/Helm) y autoescalado en Azure EEE / on-premise": {
+    "number": 41,
+    "url": "https://github.com/Omniloy/SonIA/issues/41"
+  },
+  "E5.4 \u00b7 Cumplimiento ENS medio/alto, ENI y RGPD/LOPDGDD": {
+    "number": 42,
+    "url": "https://github.com/Omniloy/SonIA/issues/42"
+  },
+  "E5.5 \u00b7 Cifrado, identidades (Keycloak OIDC), RLS y auditor\u00eda": {
+    "number": 43,
+    "url": "https://github.com/Omniloy/SonIA/issues/43"
+  },
+  "E5.6 \u00b7 Seguridad espec\u00edfica de la IA (OWASP Top 10 LLM)": {
+    "number": 44,
+    "url": "https://github.com/Omniloy/SonIA/issues/44"
+  },
+  "E5.7 \u00b7 Accesibilidad WCAG 2.1 AA": {
+    "number": 45,
+    "url": "https://github.com/Omniloy/SonIA/issues/45"
+  },
+  "E5.8 \u00b7 Interoperabilidad con la infraestructura de SUMA (API-first, ENI)": {
+    "number": 46,
+    "url": "https://github.com/Omniloy/SonIA/issues/46"
+  },
+  "E5.9 \u00b7 Observabilidad: Langfuse autoalojado + m\u00e9tricas": {
+    "number": 47,
+    "url": "https://github.com/Omniloy/SonIA/issues/47"
+  },
+  "E6 \u00b7 Entregables, QA, piloto, formaci\u00f3n y soporte": {
+    "number": 48,
+    "url": "https://github.com/Omniloy/SonIA/issues/48"
+  },
+  "E6.1 \u00b7 Documentaci\u00f3n t\u00e9cnica y manuales": {
+    "number": 49,
+    "url": "https://github.com/Omniloy/SonIA/issues/49"
+  },
+  "E6.2 \u00b7 Pruebas de aceptaci\u00f3n e informe de validaci\u00f3n (UAT)": {
+    "number": 50,
+    "url": "https://github.com/Omniloy/SonIA/issues/50"
+  },
+  "E6.3 \u00b7 Piloto controlado, demostraci\u00f3n funcional y despliegue progresivo": {
+    "number": 51,
+    "url": "https://github.com/Omniloy/SonIA/issues/51"
+  },
+  "E6.4 \u00b7 Formaci\u00f3n (30 jornadas) y devoluci\u00f3n del servicio": {
+    "number": 52,
+    "url": "https://github.com/Omniloy/SonIA/issues/52"
+  },
+  "E6.5 \u00b7 Soporte post-implantaci\u00f3n (12 sem, \u22644 h) y presencialidad": {
+    "number": 53,
+    "url": "https://github.com/Omniloy/SonIA/issues/53"
+  },
+  "E7 \u00b7 Evoluci\u00f3n \u2014 gesti\u00f3n documental, aprendizaje instant\u00e1neo, anal\u00edtica e integraciones": {
+    "number": 54,
+    "url": "https://github.com/Omniloy/SonIA/issues/54"
+  },
+  "E7.1 \u00b7 Panel de gesti\u00f3n documental": {
+    "number": 55,
+    "url": "https://github.com/Omniloy/SonIA/issues/55"
+  },
+  "E7.2 \u00b7 Aprendizaje instant\u00e1neo (el feedback reorganiza el \u00edndice)": {
+    "number": 56,
+    "url": "https://github.com/Omniloy/SonIA/issues/56"
+  },
+  "E7.3 \u00b7 Anal\u00edtica e insights": {
+    "number": 57,
+    "url": "https://github.com/Omniloy/SonIA/issues/57"
+  },
+  "E7.4 \u00b7 Integraciones con endpoints/servicios externos": {
+    "number": 58,
+    "url": "https://github.com/Omniloy/SonIA/issues/58"
+  },
+  "E8 \u00b7 Conformidad ENI (autocertificaci\u00f3n)": {
+    "number": 59,
+    "url": "https://github.com/Omniloy/SonIA/issues/59"
+  },
+  "E8.1 \u00b7 Cat\u00e1logo de formatos y est\u00e1ndares admitidos (NTI Cat\u00e1logo de est\u00e1ndares)": {
+    "number": 60,
+    "url": "https://github.com/Omniloy/SonIA/issues/60"
+  },
+  "E8.2 \u00b7 Esquema de metadatos m\u00ednimos ENI + mapeo e-EMGDE (NTI Documento electr\u00f3nico)": {
+    "number": 61,
+    "url": "https://github.com/Omniloy/SonIA/issues/61"
+  },
+  "E8.3 \u00b7 Especificaci\u00f3n del documento electr\u00f3nico ENI + ejemplo XML (NTI Documento electr\u00f3nico)": {
+    "number": 62,
+    "url": "https://github.com/Omniloy/SonIA/issues/62"
+  },
+  "E8.4 \u00b7 Pol\u00edtica de firma electr\u00f3nica y certificados (NTI Pol\u00edtica de firma)": {
+    "number": 63,
+    "url": "https://github.com/Omniloy/SonIA/issues/63"
+  },
+  "E8.5 \u00b7 Pol\u00edtica de gesti\u00f3n documental (PGDE): clasificaci\u00f3n, conservaci\u00f3n y roles (NTI Gesti\u00f3n documental)": {
+    "number": 64,
+    "url": "https://github.com/Omniloy/SonIA/issues/64"
+  },
+  "E8.6 \u00b7 Requisitos generales ENI: inventario, interoperabilidad y conservaci\u00f3n a largo plazo": {
+    "number": 65,
+    "url": "https://github.com/Omniloy/SonIA/issues/65"
+  },
+  "(Plantilla \u00b7 evoluci\u00f3n) E8.7 \u00b7 Expediente electr\u00f3nico, copiado aut\u00e9ntico y digitalizaci\u00f3n": {
+    "number": 66,
+    "url": "https://github.com/Omniloy/SonIA/issues/66"
+  },
+  "E8.8 \u00b7 Checklist cumplimentado y Declaraci\u00f3n de conformidad ENI (autocertificaci\u00f3n)": {
+    "number": 67,
+    "url": "https://github.com/Omniloy/SonIA/issues/67"
+  },
+  "E7.5 \u00b7 Memoria del agente + agente de auto-correcci\u00f3n (remediaci\u00f3n supervisada)": {
+    "number": 75,
+    "url": "https://github.com/Omniloy/SonIA/issues/75"
+  },
+  "E1.10 \u00b7 API CRUD de \u00e1rbol/nodos en pageindexomniloy (PR de backend)": {
+    "number": 77,
+    "url": "https://github.com/Omniloy/SonIA/issues/77"
+  }
+}

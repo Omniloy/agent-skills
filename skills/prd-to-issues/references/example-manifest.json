@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "title": "Acme — Implementation Plan",
+    "subtitle": "Derived from the Acme PRD",
+    "source": "docs/PRD.md",
+    "repo": "acme/app",
+    "generated": "2026-01-01"
+  },
+  "labels": [
+    { "name": "epic", "color": "6f42c1", "description": "Tracks a body of work with sub-issues" },
+    { "name": "phase-0", "color": "0e8a16", "description": "Spike" },
+    { "name": "area:auth", "color": "1d76db", "description": "Authentication" },
+    { "name": "type:feature", "color": "a2eeef", "description": "New capability" }
+  ],
+  "milestones": [
+    { "title": "Phase 0 — Spike", "description": "Prove the core path end-to-end." }
+  ],
+  "overview_blocks": [
+    { "type": "callout", "tone": "info", "title": "Scope", "body_md": "Reuse the existing **session store**; only the refresh flow is new." },
+    { "type": "mermaid", "title": "Auth flow", "source": "graph LR; A[Login]-->B[Issue JWT]; B-->C[Refresh]; C-->B" },
+    { "type": "data-model", "title": "New tables", "entities": [
+      { "name": "sessions", "fields": [
+        { "name": "id", "type": "uuid", "pk": true },
+        { "name": "user_id", "type": "uuid", "fk": "users.id" },
+        { "name": "expires_at", "type": "timestamptz" }
+      ] }
+    ] },
+    { "type": "file-tree", "title": "Where code lands", "entries": [
+      { "path": "server/auth/refresh.ts", "change": "added", "note": "New refresh handler" }
+    ] }
+  ],
+  "open_questions": ["Which token TTL — 15m or 1h?"],
+  "epics": [
+    {
+      "key": "auth",
+      "title": "Authentication & sessions",
+      "summary_md": "Add token refresh so sessions survive past the access-token TTL.",
+      "labels": ["epic", "phase-0", "area:auth"],
+      "milestone": "Phase 0 — Spike",
+      "prd_refs": ["§3"],
+      "issues": [
+        {
+          "title": "Add refresh-token endpoint",
+          "labels": ["area:auth", "type:feature", "phase-0"],
+          "milestone": "Phase 0 — Spike",
+          "prd_refs": ["§3.2"],
+          "estimate": "M",
+          "functional_md": "A signed-in user stays signed in: when the access token expires, the app silently gets a new one instead of bouncing the user to the login screen.",
+          "acceptance": [
+            "An expired access token is transparently refreshed",
+            "A revoked refresh token forces re-login"
+          ],
+          "technical_md": "Add `POST /api/auth/refresh` in `server/auth/refresh.ts`. Validate the refresh token against the new `sessions` table (migration `0005_sessions.sql`), rotate it, and return a new JWT. Reuse the existing `signJwt()` in `server/auth/jwt.ts`."
+        }
+      ]
+    }
+  ]
+}

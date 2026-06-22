@@ -1,0 +1,102 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "prd-to-issues manifest",
+  "description": "Drives BOTH the visual HTML plan and the gh issue creation. Author this from the PRD; render to plan.html; on approval, create issues.",
+  "type": "object",
+  "required": ["meta", "epics"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["title"],
+      "properties": {
+        "title": {"type": "string"},
+        "subtitle": {"type": "string"},
+        "source": {"type": "string", "description": "Path to the PRD this was derived from."},
+        "repo": {"type": "string", "description": "owner/name target repo."},
+        "generated": {"type": "string"}
+      }
+    },
+    "labels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {"type": "string", "description": "e.g. epic, phase-0, area:intake, type:feature"},
+          "color": {"type": "string", "description": "6-hex, no '#'."},
+          "description": {"type": "string"}
+        }
+      }
+    },
+    "milestones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {"title": {"type": "string"}, "description": {"type": "string"}, "due_on": {"type": ["string", "null"]}}
+      }
+    },
+    "overview_blocks": {"type": "array", "items": {"$ref": "#/definitions/block"}},
+    "open_questions": {"type": "array", "items": {"type": "string"}},
+    "epics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["title", "issues"],
+        "properties": {
+          "key": {"type": "string", "description": "Stable slug for --limit-epic and cross-ref."},
+          "title": {"type": "string"},
+          "summary_md": {"type": "string", "description": "Narrative: what & why. Markdown."},
+          "labels": {"type": "array", "items": {"type": "string"}},
+          "milestone": {"type": "string", "description": "Must match a milestones[].title."},
+          "prd_refs": {"type": "array", "items": {"type": "string"}},
+          "blocks": {"type": "array", "items": {"$ref": "#/definitions/block"}},
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["title", "functional_md", "technical_md"],
+              "properties": {
+                "title": {"type": "string"},
+                "functional_md": {"type": "string", "description": "What & why for a non-engineer. No implementation detail."},
+                "technical_md": {"type": "string", "description": "How: files/paths, data model, APIs, libs, services, sequencing, risks."},
+                "acceptance": {"type": "array", "items": {"type": "string"}, "description": "Observable outcomes -> rendered as a checklist."},
+                "labels": {"type": "array", "items": {"type": "string"}},
+                "milestone": {"type": "string"},
+                "prd_refs": {"type": "array", "items": {"type": "string"}},
+                "estimate": {"type": "string", "description": "e.g. S/M/L or points."},
+                "design_note": {"type": "string", "description": "One-line instruction shown above design refs (e.g. rebrand caveat)."},
+                "design_refs": {"type": "array", "description": "UX mockups this issue must build to; rendered as a 🎨 Design reference section.", "items": {"type": "object", "required": ["src"], "properties": {"src": {"type": "string", "description": "Repo blob path/URL of the committed figure."}, "label": {"type": "string"}, "caption": {"type": "string"}}}},
+                "blocks": {"type": "array", "items": {"$ref": "#/definitions/block"}}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "block": {
+      "type": "object",
+      "required": ["type"],
+      "description": "Visual block. type ∈ callout|diagram|mermaid|image|table|code|file-tree|data-model. Reuse images/diagrams from the doc here, or create them.",
+      "properties": {
+        "type": {"type": "string", "enum": ["callout", "diagram", "mermaid", "image", "table", "code", "file-tree", "data-model"]},
+        "title": {"type": "string"},
+        "caption": {"type": "string"},
+        "tone": {"type": "string", "enum": ["info", "decision", "risk", "warning", "success"], "description": "callout only"},
+        "body_md": {"type": "string", "description": "callout only"},
+        "html": {"type": "string", "description": "diagram only — raw HTML using .diagram-* primitives"},
+        "source": {"type": "string", "description": "mermaid only — mermaid source"},
+        "src": {"type": "string", "description": "image only — local path (inlined as data-URI) or URL"},
+        "columns": {"type": "array", "description": "table only"},
+        "rows": {"type": "array", "description": "table only"},
+        "code": {"type": "string", "description": "code only"},
+        "filename": {"type": "string", "description": "code only"},
+        "language": {"type": "string", "description": "code only"},
+        "entries": {"type": "array", "description": "file-tree only — [{path, change, note}]"},
+        "entities": {"type": "array", "description": "data-model only — [{name, fields:[{name,type,pk,fk,note}]}]"}
+      }
+    }
+  }
+}
