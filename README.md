@@ -29,6 +29,7 @@ A small, battle-tested set of **[Claude Code](https://claude.com/claude-code) sk
 | Skill | What it does | Invoke |
 | --- | --- | --- |
 | **[`epic-loop`](skills/epic-loop/)** | Orchestrates an autonomous, Epic-by-Epic build on a **standard issue structure** (Milestone → Epic → sub-issues). Delegates each Epic's code to a subagent, opens one PR, drives the review-bot/CI gate to green, merges, and **keeps the backlog truthful** (closes sub-issues, ticks the Epic task-list, closes the Epic, advances the Milestone). Includes `scripts/backlog.py` (`epics` / `next` / **`audit`** / `review-status`). | `/epic-loop` |
+| **[`jira-action-plan`](skills/jira-action-plan/)** | The deliberate, single-ticket counterpart to `epic-loop`, driven from **Jira** (via the Atlassian MCP). Fetches the issue + linked issues + comments, scans the current repo, surfaces real decisions with pros/cons via `AskUserQuestion`, drafts a step-by-step plan (always including tests) for approval, then implements pausing after each step so you can review the working tree. Never commits or pushes without explicit permission. Hands off to `/live-testing-plan` at the end. | `/jira-action-plan <KEY-or-URL>` |
 | **[`prd-to-issues`](skills/prd-to-issues/)** | Reads a PRD, authors a structured `manifest.json`, renders a **visual plan** for human approval, then creates the Milestones + Epics + sub-issues + labels + **native sub-issue links** on GitHub via `gh` (idempotent). Every sub-issue carries a **Functional** and **Technical** section + acceptance criteria. | `/prd-to-issues` |
 | **[`review-pr`](skills/review-pr/)** | Fetches a PR's inline + summary review comments, classifies each (valid / partial / not valid), presents a plan, applies minimal fixes, replies on GitHub per comment with the fix commit, and re-requests review. | `/review-pr <n>` |
 | **[`visual-recap`](skills/visual-recap/)** | Builds an interactive, annotatable **Agent-Native Plan** from work — diagrams, wireframes, `data-model`/ERD, `api-endpoint` specs, file-tree — and publishes it (never inline). Great for architecture reviews and handoffs. | `/visual-recap` |
@@ -87,6 +88,7 @@ cp -R agent-skills/skills/{prd-to-issues,epic-loop,review-pr} ~/.claude/skills/
 - **Claude Code** with the Skill tool.
 - **`gh`** (GitHub CLI) authenticated — `gh auth status` — for `prd-to-issues`, `epic-loop`, and `review-pr`.
 - A **review bot** (e.g. Greptile / CodeRabbit) installed on the repo, or CI, if you want `epic-loop` to drive a quality gate. The default gate detection is Greptile (see `skills/epic-loop/references/review-gates.md`).
+- For `jira-action-plan`: the **Atlassian MCP** connector connected (`getAccessibleAtlassianResources`, `getJiraIssue`, etc.) — used to fetch the issue, linked issues, comments, and optionally post a wrap-up comment.
 - For `visual-recap`: the **Agent-Native Plan** MCP connector (`plan`) connected.
 
 ## Worked example — SonIA
