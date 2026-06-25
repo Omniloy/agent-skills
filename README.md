@@ -22,13 +22,14 @@ A small, battle-tested set of **[Claude Code](https://claude.com/claude-code) sk
    /visual-recap ──────────► publish an interactive architecture/feature recap of what shipped
 ```
 
-- **`prd-to-issues`** creates the structure. **`epic-loop`** (paced by **`loop`**) implements it and keeps it updated. **`review-pr`** closes each review round. **`visual-recap`** documents the result.
+- **`prd-to-issues`** creates the structure. **`epic-loop`** (paced by **`loop`**) implements it and keeps it updated. **`review-pr`** closes each review round (or **`greptile-resolve`** for a single Greptile-specific pass that fixes valid comments + resolves threads). **`visual-recap`** documents the result.
 
 ## The skills
 
 | Skill | What it does | Invoke |
 | --- | --- | --- |
 | **[`epic-loop`](skills/epic-loop/)** | Orchestrates an autonomous, Epic-by-Epic build on a **standard issue structure** (Milestone → Epic → sub-issues). Delegates each Epic's code to a subagent, opens one PR, drives the review-bot/CI gate to green, merges, and **keeps the backlog truthful** (closes sub-issues, ticks the Epic task-list, closes the Epic, advances the Milestone). Includes `scripts/backlog.py` (`epics` / `next` / **`audit`** / `review-status`). | `/epic-loop` |
+| **[`greptile-resolve`](skills/greptile-resolve/)** | Greptile-specific PR-review responder with **two modes** chosen at start: **single** (one round, then exit) or **loop** (self-paced via `ScheduleWakeup` under `/loop`, capped at 5 rounds, stops on 5/5). In every round: reads the inline comments + Confidence Score, verifies each against the actual code, then if valid applies the minimal fix and **marks the review thread resolved** via GraphQL; if invalid replies with a brief justification and leaves the thread open. Use this when `/review-pr`'s plan-then-approve gate is overkill and you trust the agent to decide validity itself. | `/greptile-resolve <n> [single\|loop]` |
 | **[`jira-action-plan`](skills/jira-action-plan/)** | The deliberate, single-ticket counterpart to `epic-loop`, driven from **Jira** (via the Atlassian MCP). Fetches the issue + linked issues + comments, scans the current repo, surfaces real decisions with pros/cons via `AskUserQuestion`, drafts a step-by-step plan (always including tests) for approval, then implements pausing after each step so you can review the working tree. Never commits or pushes without explicit permission. Hands off to `/live-testing-plan` at the end. | `/jira-action-plan <KEY-or-URL>` |
 | **[`live-testing-plan`](skills/live-testing-plan/)** | The verification half of `/jira-action-plan`. Locks in the acceptance criteria (extracts them from the Jira issue or discusses with the user until a set is agreed), asks who will run the tests (Claude against a live server / the Omniloy **evals platform** / the user manually), drafts a mode-tailored plan with setup prereqs + step-by-step test cases each carrying its own AC, executes when Claude is the runner, and delivers a results table (✅ / ⛔) with a per-AC coverage summary. For evals mode it produces a persona + evaluator + test-config spec and hands off to `/agent-eval-api`. Output lives in chat unless you ask for a file. | `/live-testing-plan <KEY-or-URL>` |
 | **[`prd-to-issues`](skills/prd-to-issues/)** | Reads a PRD, authors a structured `manifest.json`, renders a **visual plan** for human approval, then creates the Milestones + Epics + sub-issues + labels + **native sub-issue links** on GitHub via `gh` (idempotent). Every sub-issue carries a **Functional** and **Technical** section + acceptance criteria. | `/prd-to-issues` |
@@ -75,7 +76,7 @@ Claude Code loads skills from `~/.claude/skills/` (user-level) or `.claude/skill
 ```bash
 git clone https://github.com/Omniloy/agent-skills
 cp -R agent-skills/skills/* ~/.claude/skills/
-# then in Claude Code:  /epic-loop   /prd-to-issues   /review-pr   /visual-recap
+# then in Claude Code:  /epic-loop   /prd-to-issues   /review-pr   /greptile-resolve   /visual-recap
 ```
 
 Or copy a single skill (e.g. just the issue workflow):
@@ -87,7 +88,7 @@ cp -R agent-skills/skills/{prd-to-issues,epic-loop,review-pr} ~/.claude/skills/
 ### Prerequisites
 
 - **Claude Code** with the Skill tool.
-- **`gh`** (GitHub CLI) authenticated — `gh auth status` — for `prd-to-issues`, `epic-loop`, and `review-pr`.
+- **`gh`** (GitHub CLI) authenticated — `gh auth status` — for `prd-to-issues`, `epic-loop`, `review-pr`, and `greptile-resolve`.
 - A **review bot** (e.g. Greptile / CodeRabbit) installed on the repo, or CI, if you want `epic-loop` to drive a quality gate. The default gate detection is Greptile (see `skills/epic-loop/references/review-gates.md`).
 - For `jira-action-plan` and `live-testing-plan`: the **Atlassian MCP** connector connected (`getAccessibleAtlassianResources`, `getJiraIssue`, etc.) — used to fetch the issue, linked issues, comments, and optionally post a wrap-up comment.
 - For `live-testing-plan` evals mode: the **Omniloy `agent-evaluator`** skill (`/agent-eval-api`) installed and reachable — `live-testing-plan` only produces the spec; `agent-eval-api` executes it.
