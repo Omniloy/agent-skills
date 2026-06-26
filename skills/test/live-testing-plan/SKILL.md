@@ -1,12 +1,12 @@
 ---
 name: live-testing-plan
-description: Design a manual / live verification plan for a Jira issue. Locks in the acceptance criteria (extracting them from the issue or discussing with the user until a set is agreed), then asks who will run the tests (Claude Code against a live server / the Omniloy evals platform / the user themselves), drafts a mode-tailored plan with setup prerequisites and step-by-step test cases each carrying its own acceptance criteria, executes them if Claude is the runner, and delivers a results table marking each test ✅ or ⛔. Pairs with `/jira-action-plan` (Step 6 handoff) but also runs standalone. Usage - "/live-testing-plan MAR-123" or "/live-testing-plan https://omniloy.atlassian.net/browse/MAR-123".
-user_invocable: true
+description: Design a manual / live verification plan for a Jira issue. Locks in the acceptance criteria (extracting them from the issue or discussing with the user until a set is agreed), then asks who will run the tests (Claude Code against a live server / the Omniloy evals platform / the user themselves), drafts a mode-tailored plan with setup prerequisites and step-by-step test cases each carrying its own acceptance criteria, executes them if Claude is the runner, and delivers a results table marking each test ✅ or ⛔. Pairs with `/ship` (verify after it implements) and with the Verification ticket that `create-jira-work-items` files, but also runs standalone. Usage - "/live-testing-plan MAR-123" or "/live-testing-plan https://omniloy.atlassian.net/browse/MAR-123".
+user-invocable: true
 ---
 
 # live-testing-plan
 
-Turn a Jira issue into a **live verification plan** — the kind a human, Claude, or the evals platform can execute against a real running system — and deliver a pass/fail report. This is the verification half of the loop that starts with `/jira-action-plan`: that skill ships the code, this one proves it works.
+Turn a Jira issue into a **live verification plan** — the kind a human, Claude, or the evals platform can execute against a real running system — and deliver a pass/fail report. This is the verification half of the loop: `/ship` ships the code, this one proves it works (and it's how a Verification ticket from `create-jira-work-items` gets executed).
 
 ## Input
 
@@ -15,7 +15,7 @@ The user provides a Jira issue key or full URL:
 - `/live-testing-plan MAR-123`
 - `/live-testing-plan https://omniloy.atlassian.net/browse/MAR-123`
 
-If invoked as a handoff from `/jira-action-plan`, the Jira key + the implemented-changes context are already in the conversation — reuse them and skip the redundant fetches.
+If invoked as a handoff from `/ship` (or right after implementation in the same thread), the Jira key + the implemented-changes context are already in the conversation — reuse them and skip the redundant fetches.
 
 ## Step 1: Fetch the issue and extract acceptance criteria
 
@@ -29,7 +29,7 @@ If invoked as a handoff from `/jira-action-plan`, the Jira key + the implemented
    ```
 3. Read the description and comments looking for **explicit acceptance criteria** — typically a section titled "Acceptance Criteria", "AC", "Criterios de aceptación", a checklist (`- [ ]` items), or a "Given/When/Then" block. Capture each as a discrete, testable statement.
 4. Fetch linked issues briefly with `getJiraIssue` (lean fields) — sometimes the parent epic or a linked spec carries the AC instead. One hop only.
-5. If the issue's `issuetype` is `Verification`, that's fine here (unlike `jira-action-plan`, this skill explicitly supports verification-type issues — they exist to be tested).
+5. If the issue's `issuetype` is `Verification`, that's exactly the case this skill is built for — verification-type issues (such as the one `create-jira-work-items` files alongside each Feature) exist to be tested.
 
 Produce an internal draft: a list of AC statements, each marked `[from issue]` or `[from linked-<KEY>]` so you can show the user where each came from.
 
@@ -71,7 +71,7 @@ If "Claude Code against a live server" is chosen, also ask in the same `AskUserQ
 Find what's actually being tested so the plan is concrete.
 
 1. Confirm the repo (`git rev-parse --show-toplevel`, `git remote -v`).
-2. If invoked standalone (not from `/jira-action-plan`), inspect recent change context:
+2. If invoked standalone (not as a handoff from `/ship`), inspect recent change context:
    ```bash
    git status
    git log --oneline -10
@@ -196,7 +196,7 @@ Do not push code, open PRs, or modify the working tree.
 
 - **AC are sacred.** Every test ties to an AC. AC that aren't covered are flagged, not hidden.
 - **Stay scoped.** A test plan for `MAR-123` tests `MAR-123`'s AC. If the user wants to test something else, that's a different invocation.
-- **Verification ≠ fix.** This skill detects ⛔; it does not patch. On failure, surface it and stop — the next move is `/jira-action-plan` (or human triage), not silent code edits.
+- **Verification ≠ fix.** This skill detects ⛔; it does not patch. On failure, surface it and stop — the next move is `/ship` (or human triage), not silent code edits.
 - **Never invent IDs or endpoints.** For evals mode, follow the `agent-eval-api` rule: resolve real `agent_id` / tool names before drafting the spec. For Claude live-server mode, ask the user for the URL and auth rather than guessing.
-- **One repo, one issue.** Same rule as `jira-action-plan` — don't cross repos unless the user explicitly says so.
+- **One repo, one issue.** Same rule as `ship` — don't cross repos unless the user explicitly says so.
 - **The console is the deliverable.** Plan and results live in chat by default — only write a file if the user asks.

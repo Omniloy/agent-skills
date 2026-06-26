@@ -24,8 +24,9 @@ first.
   always included) and treats presenting it as the approval gate — the last time it
   asks you anything.
 - Runs unattended after approval: implements the plan, opens one PR against the
-  integration branch, and drives the **Greptile review to 5/5** (reusing
-  `greptile-resolve` loop mechanics), capped at 8 rounds, never auto-merging.
+  integration branch, and drives the **Greptile review to 5/5** (reusing the
+  `review-pr` loop mechanics, which also clear failing CI/CD checks and
+  human/Supabase comments), capped at 8 rounds, never auto-merging.
 - Closes out by squashing to a single clean commit, publishing a **visual recap**
   of what actually shipped, and threading the plan + recap links into the PR body.
 
@@ -36,10 +37,9 @@ with the human in the loop only at the start. After you approve the plan, it own
 the implement → review → 5/5 → recap cycle on its own. Run it under `/loop`
 (`/loop /ship <ticket>`) so the review gate can self-pace between Greptile rounds.
 
-Skip it when you want to inspect every change as it lands (use `jira-action-plan`,
-which pauses after each step and never auto-commits), when you're driving a whole
-backlog of epics (use `epic-loop`), or when you only need to respond to an existing
-PR's review (use `greptile-resolve`).
+Skip it when you're driving a whole backlog of epics (use `epic-loop`), or when you
+only need to resolve an existing PR — its Greptile score, failing CI/CD checks, or
+review comments (use `review-pr`).
 
 ## Examples
 
@@ -61,7 +61,7 @@ Claude Code loads skills from `~/.claude/skills/` (user-level) or `.claude/skill
 
 ```sh
 git clone https://github.com/Omniloy/agent-skills
-cp -R agent-skills/skills/ship ~/.claude/skills/
+cp -R agent-skills/skills/core/ship ~/.claude/skills/
 # then in Claude Code:  /ship <KEY-or-text>
 ```
 

@@ -1,6 +1,7 @@
 ---
 name: epic-loop
 description: Autonomously implement a backlog Epic-by-Epic with a STANDARD issue structure (Milestone → Epic → sub-issues) and strict status hygiene. Reads the project's GitHub Milestones/Epics/sub-issues (or a PRD doc), asks the key clarifying questions once, then runs a self-paced loop that for each Epic implements its sub-issues (code + tests + real E2E), opens one PR, drives the review-bot/CI gate (e.g. Greptile) via /review-pr until it passes, merges, and KEEPS THE BACKLOG TRUTHFUL (closes sub-issues, ticks the Epic task-list, closes the Epic, advances the Milestone). Triggers on - "run the epic loop", "start the build loop", "implement the epics/issues", "ship the backlog", "build out the features one by one", "autonomously work through the issues".
+user-invocable: true
 ---
 
 # epic-loop
