@@ -24,6 +24,24 @@ A small, battle-tested set of **[Claude Code](https://claude.com/claude-code) sk
 
 - **`prd-to-issues`** creates the structure. **`epic-loop`** (paced by **`loop`**) implements it and keeps it updated. **`review-pr`** closes each review round (or **`greptile-resolve`** for a single Greptile-specific pass that fixes valid comments + resolves threads). **`visual-recap`** documents the result.
 
+For a **single ticket end-to-end**, `ship` composes the same building blocks into one command — attended kickoff, then unattended delivery:
+
+```
+   Jira KEY / idea
+        │
+        ▼
+     /ship  (+ /loop)
+        │
+        ├─ ACT 1  kickoff (attended) ── close gaps (visual questionnaire)
+        │                            └─ write update / create ticket (approve)
+        │                            └─ visual plan (approve)  ← last human gate
+        ├─ ACT 2  build + gate (unattended) ── implement → ONE PR vs BASE
+        │                                    └─ Greptile loop → 5/5  (greptile-resolve)
+        └─ ACT 3  closeout ── squash → /visual-recap → PR body carries plan + recap links → stop (no merge)
+```
+
+- **`ship`** is the "approve the plan and walk away" path: `jira-action-plan`'s context-gathering + `visual-plan`'s approval surface + `greptile-resolve` loop's 5/5 gate + `visual-recap`'s closeout, wired into a single autonomous run. Use `jira-action-plan` instead when you want the human in the loop at *every* step.
+
 ## The skills
 
 | Skill | What it does | Invoke |
@@ -35,6 +53,7 @@ A small, battle-tested set of **[Claude Code](https://claude.com/claude-code) sk
 | **[`live-testing-plan`](skills/live-testing-plan/)** | The verification half of `/jira-action-plan`. Locks in the acceptance criteria (extracts them from the Jira issue or discusses with the user until a set is agreed), asks who will run the tests (Claude against a live server / the Omniloy **evals platform** / the user manually), drafts a mode-tailored plan with setup prereqs + step-by-step test cases each carrying its own AC, executes when Claude is the runner, and delivers a results table (✅ / ⛔) with a per-AC coverage summary. For evals mode it produces a persona + evaluator + test-config spec and hands off to `/agent-eval-api`. Output lives in chat unless you ask for a file. | `/live-testing-plan <KEY-or-URL>` |
 | **[`prd-to-issues`](skills/prd-to-issues/)** | Reads a PRD, authors a structured `manifest.json`, renders a **visual plan** for human approval, then creates the Milestones + Epics + sub-issues + labels + **native sub-issue links** on GitHub via `gh` (idempotent). Every sub-issue carries a **Functional** and **Technical** section + acceptance criteria. | `/prd-to-issues` |
 | **[`review-pr`](skills/review-pr/)** | Fetches a PR's inline + summary review comments, classifies each (valid / partial / not valid), presents a plan, applies minimal fixes, replies on GitHub per comment with the fix commit, and re-requests review. | `/review-pr <n>` |
+| **[`ship`](skills/ship/)** | The **single-ticket, end-to-end conductor**. Front-loads every human decision (close information gaps with a **visual questionnaire**, write the update into the Jira ticket — or **create** one — with approval, then a **visual plan** you sign off), then runs **unattended**: implements the plan, opens one PR against the integration branch, and drives the **Greptile review to 5/5** (reusing `greptile-resolve` loop mechanics), squashes to one commit, publishes a **visual recap**, and threads the **plan + recap links** into the PR body. The "approve the plan and walk away" path; never merges. | `/ship <KEY-or-text>` |
 | **[`visual-recap`](skills/visual-recap/)** | Builds an interactive, annotatable **Agent-Native Plan** from work — diagrams, wireframes, `data-model`/ERD, `api-endpoint` specs, file-tree — and publishes it (never inline). Great for architecture reviews and handoffs. | `/visual-recap` |
 | **`loop`** *(built-in)* | `/loop [interval] <prompt>` — schedules a recurring or **self-paced** prompt. In dynamic mode it runs the task now, then uses `ScheduleWakeup` to re-fire (short while polling a review, long while a background agent works). This is what lets `epic-loop` run autonomously. Built into Claude Code; documented here for completeness. | `/loop` |
 
@@ -77,7 +96,7 @@ Claude Code loads skills from `~/.claude/skills/` (user-level) or `.claude/skill
 ```bash
 git clone https://github.com/Omniloy/agent-skills
 cp -R agent-skills/skills/* ~/.claude/skills/
-# then in Claude Code:  /epic-loop   /prd-to-issues   /review-pr   /greptile-resolve   /visual-recap
+# then in Claude Code:  /ship   /epic-loop   /prd-to-issues   /review-pr   /greptile-resolve   /visual-recap
 ```
 
 Or copy a single skill (e.g. just the issue workflow):
@@ -94,6 +113,7 @@ cp -R agent-skills/skills/{prd-to-issues,epic-loop,review-pr} ~/.claude/skills/
 - For `jira-action-plan` and `live-testing-plan`: the **Atlassian MCP** connector connected (`getAccessibleAtlassianResources`, `getJiraIssue`, etc.) — used to fetch the issue, linked issues, comments, and optionally post a wrap-up comment.
 - For `live-testing-plan` evals mode: the **Omniloy `agent-evaluator`** skill (`/agent-eval-api`) installed and reachable — `live-testing-plan` only produces the spec; `agent-eval-api` executes it.
 - For `visual-recap`: the **Agent-Native Plan** MCP connector (`plan`) connected.
+- For `ship`: all of the above together — **`gh`** authenticated, the **Atlassian MCP** connector (read the ticket, write the update / create it), the **Agent-Native Plan** MCP connector (`plan`, for the visual questionnaire + plan + recap), and a **Greptile** review bot on the repo. Run it under **`/loop`** (`/loop /ship <ticket>`) so the Act-2 gate can self-pace.
 
 ## Worked example — SonIA
 
