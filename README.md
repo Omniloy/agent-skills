@@ -11,9 +11,10 @@ The skills live in three tiers under [`skills/`](skills/), by their role in the 
 ```
 skills/
   core/      ← the single-ticket loop every developer uses
-    ship             implement a ticket end-to-end, drive its PR to 5/5, recap it
-    review-pr        take any PR to green: Greptile 5/5 + CI/CD + human/Supabase comments
-    visual-recap     publish an interactive recap of what shipped
+    ship                    implement a ticket end-to-end, drive its PR to 5/5, recap it
+    review-pr               take any PR to green: Greptile 5/5 + CI/CD + human/Supabase comments
+    visual-recap            publish an interactive recap of what shipped
+    release-title-changelog title + one/two-sentence changelog from a release PR's commits
   test/      ← verification
     live-testing-plan   design + run a live/QA verification plan for a ticket
     agent-eval-api      run agent evals on the Omniloy Agent Testing Platform (optional)
@@ -73,6 +74,7 @@ skills/
 | core | **[`ship`](skills/core/ship/)** | The **single-ticket, end-to-end conductor**. Front-loads every human decision (close information gaps with a **visual questionnaire**, write the update into the Jira ticket — or **create** the Feature+Dev+Verification triad via `create-jira-work-items` — with approval, then a **visual plan** you sign off), then runs **unattended**: implements the plan, opens one PR against the integration branch, and drives it to **Greptile 5/5 + CI green** (reusing the `review-pr` loop), squashes to one commit, publishes a **visual recap**, and threads the **plan + recap links** into the PR body. Never merges. | `/ship <KEY-or-text>` |
 | core | **[`review-pr`](skills/core/review-pr/)** | The comprehensive, **autonomous** PR resolver. Resolves *everything* a PR carries: drives a **Greptile** review to 5/5, fixes failing **CI/CD checks (GitHub Actions)**, and addresses **human reviewers + other bots (incl. Supabase advisors/lints)** — verifying each against the actual code, applying minimal fixes, replying per comment, resolving threads, re-requesting review. **single** (one pass) or **loop** (self-paced to green, capped at N rounds). Never asks for fix-approval; an ambiguous item is the only escalation. | `/review-pr <n> [single\|loop]` |
 | core | **[`visual-recap`](skills/core/visual-recap/)** | Builds an interactive, annotatable **Agent-Native Plan** from work — diagrams, wireframes, `data-model`/ERD, `api-endpoint` specs, file-tree, annotated diffs — and publishes it (never inline). Great for architecture reviews and handoffs. | `/visual-recap` |
+| core | **[`release-title-changelog`](skills/core/release-title-changelog/)** | Turns a release's commits into a **headline-style title** (4–8 words) + a **1–2 sentence prose changelog** (never a list). Reads the commit range from a **PR number/URL** (`gh pr view`, the usual release-PR-into-`main` flow), a pasted commit list, or a git range (`git log <tag>..HEAD` / `--merges`). Filters noise, groups by theme, never invents scope. | `/release-title-changelog [PR# or commits]` |
 | test | **[`live-testing-plan`](skills/test/live-testing-plan/)** | Designs a live/QA **verification plan** for a Jira issue: locks the acceptance criteria, asks who runs the tests (Claude against a live server / the Omniloy **evals platform** / the user manually), drafts a mode-tailored plan with setup + step-by-step cases each carrying its own AC, executes when Claude is the runner, and delivers a ✅/⛔ results table with per-AC coverage. Executes the **Verification** ticket that `create-jira-work-items` files. | `/live-testing-plan <KEY-or-URL>` |
 | test | **[`agent-eval-api`](skills/test/agent-eval-api/)** | Operates the Omniloy **Agent Testing Platform** API end-to-end: authenticates, resolves or creates agents / personas / evaluators / test configs (reuse-before-create, `AI_generated-` prefix, shared-vs-owned hygiene), runs pre-flight checks, launches a test run, polls it to a terminal state, and reads back transcripts + `score`/`passed`. The **execution half** that `/live-testing-plan` (evals mode) hands its spec off to. *(Optional — only if you run agent evals.)* | `/agent-eval-api` |
 | backlog | **[`create-jira-work-items`](skills/backlog/create-jira-work-items/)** | Files the team's **mandatory Jira structure** for any new work: a **Feature** (pinned to an existing Epic) + a linked **Dev task** (`Tarea`) + an **independent Verification** (assigned to someone other than the dev), children linked with `Relates` (not sub-tasks). Resolves site/project/epics/people at runtime, checks for duplicates, drafts everything for approval before creating, then creates Feature → Dev → Verification in order. The Jira intake standard a lone `createJiraIssue` would violate. | `/create-jira-work-items` |
@@ -123,7 +125,7 @@ git clone https://github.com/Omniloy/agent-skills
 cp -R agent-skills/skills/core/*    ~/.claude/skills/
 cp -R agent-skills/skills/test/*    ~/.claude/skills/
 cp -R agent-skills/skills/backlog/* ~/.claude/skills/
-# then in Claude Code:  /ship   /review-pr   /visual-recap   /live-testing-plan   /create-jira-work-items   /prd-to-issues   /epic-loop
+# then in Claude Code:  /ship   /review-pr   /visual-recap   /release-title-changelog   /live-testing-plan   /create-jira-work-items   /prd-to-issues   /epic-loop
 ```
 
 Or install just one tier (e.g. the everyday developer set):
