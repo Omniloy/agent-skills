@@ -1,6 +1,7 @@
 ---
 name: prd-to-issues
 description: Turn a PRD (or any spec doc) into a super-visual, self-contained HTML implementation plan of GitHub Epics + sub-issues + labels — each issue with explicit Functional and Technical sections — and, on approval, create the real Epics, sub-issues, labels and milestones via the GitHub CLI. Triggers on: "create issues from this PRD", "turn the PRD into GitHub epics", "register pending work as issues", "issue plan from spec", "PRD to issues".
+user-invocable: true
 ---
 
 # PRD → GitHub Issues (visual plan, then `gh` create)

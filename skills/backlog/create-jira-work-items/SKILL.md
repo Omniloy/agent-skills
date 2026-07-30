@@ -13,7 +13,7 @@ description: >-
   this skill, use it: it encodes structure and assignment rules that are easy to
   get wrong.
 allowed-tools: AskUserQuestion, mcp__atlassian__createJiraIssue, mcp__atlassian__createIssueLink, mcp__atlassian__searchJiraIssuesUsingJql, mcp__atlassian__getJiraIssue, mcp__atlassian__editJiraIssue, mcp__atlassian__getJiraProjectIssueTypesMetadata, mcp__atlassian__getVisibleJiraProjects, mcp__atlassian__lookupJiraAccountId, mcp__atlassian__atlassianUserInfo, Read
-user_invocable: true
+user-invocable: true
 ---
 
 # Create Jira Work Items

@@ -1,6 +1,6 @@
 ---
 name: ship
-description: End-to-end "ship it" conductor for a single ticket. Front-loads every human decision (close information gaps with a visual questionnaire, write the update into the Jira ticket — or create a new one — with your approval, then a visual plan you approve), then runs unattended (implement → open ONE PR against the integration branch → drive the Greptile review to 5/5) and finishes with a published visual recap. The PR body always carries the plan + recap links. Composes jira-action-plan (context), visual-plan (approval surface), greptile-resolve loop (the 5/5 gate), and visual-recap (closeout). Triggers on - "/ship MAR-123", "/ship 'add CSV export to the report screen'", "ship this ticket end to end", "implement MAR-123 and drive it to 5/5".
+description: End-to-end "ship it" conductor for a single ticket. Front-loads every human decision (close information gaps with a visual questionnaire, write the update into the Jira ticket — or create a new one — with your approval, then a visual plan you approve), then runs unattended (implement → open ONE PR against the integration branch → drive the Greptile review to 5/5) and finishes with a published visual recap. The PR body always carries the plan + recap links. Composes create-jira-work-items (create mode), visual-plan (approval surface), review-pr loop (the 5/5 + CI/CD gate), and visual-recap (closeout). Triggers on - "/ship MAR-123", "/ship 'add CSV export to the report screen'", "ship this ticket end to end", "implement MAR-123 and drive it to 5/5".
 user-invocable: true
 ---
 
@@ -17,15 +17,14 @@ The design rule that makes this safe: **the loop runs while you're away, so it c
 | If… | Use |
 |---|---|
 | One ticket, you want it implemented AND driven to 5/5 with no babysitting after plan approval | **`/ship`** |
-| One ticket, you want the human in the loop at **every** step (pause after each change, never auto-commit) | `/jira-action-plan` |
 | A whole backlog (Milestone → Epics → sub-issues) end-to-end | `epic-loop` |
-| You only need to respond to an existing PR's Greptile review | `/greptile-resolve <pr> loop` |
+| You only need to resolve an existing PR (Greptile 5/5 + CI/CD + comments) | `/review-pr <pr> loop` |
 
 `ship` reuses the other skills rather than reinventing them:
 
-- **`jira-action-plan`** — the context-gathering + decision-surfacing discipline of Act 1 (Phases 0–1).
+- **`create-jira-work-items`** — the team's Jira intake standard (Feature + Dev + Verification) used when ship is in create mode (Phase 2).
 - **`visual-plan`** — the approval surface (Phase 3) and the visual questionnaire (Phase 1).
-- **`greptile-resolve` (loop mode)** — the per-round fix→reply→resolve→re-request→sleep mechanics of the 5/5 gate (Phase 4). Do not duplicate that logic; drive it.
+- **`review-pr` (loop mode)** — the per-round verify→fix→reply→resolve→re-request→sleep mechanics that drive Greptile to 5/5 and clear CI/CD + comments (Phase 4). Do not duplicate that logic; drive it.
 - **`visual-recap`** — the published closeout (Phase 5).
 
 ## Input
@@ -73,7 +72,7 @@ ACT 3 — CLOSEOUT
 
 Before anything is written or planned, find what's **missing or ambiguous** about the task and resolve it with the user.
 
-1. **Gather context** the way `jira-action-plan` does:
+1. **Gather context** thoroughly:
    - Update mode: `getJiraIssue(... fields=["summary","description","issuetype","status","priority","labels","components","parent","comment","issuelinks"])`, `getJiraIssueRemoteIssueLinks`, and one hop into each linked issue. Read every comment.
    - Scan the repo for the code the task touches (`Grep`/`Glob`, or an `Explore` subagent for open-ended searches). Read the relevant files so the gaps you raise are real.
 2. **Identify the gaps** — only the ones that would change the implementation or the acceptance criteria: unclear scope boundary, missing acceptance criteria, an undecided approach with real trade-offs, an unspecified edge case, an external contract (wire format, ids, auth) not pinned down. Don't manufacture questions; if a gap has an obvious answer, state the assumption in the plan instead.
@@ -87,7 +86,7 @@ Record the resolved answers; they feed Phases 2 and 3.
 Now Jira reflects reality. **Never write to Jira without explicit approval of the exact content.**
 
 - **Update mode (key given).** Draft an *Update* block to append to the ticket: the gap resolutions, the refined/agreed acceptance criteria, and a one-paragraph implementation summary. Show the user the **exact diff/preview** (what gets added — never silently rewrite the existing description). Approve via `AskUserQuestion` (Apply update / Edit / Skip writing to Jira). On approval: `editJiraIssue` to append, or `addCommentToJiraIssue` if the team prefers comments for progress notes (match the ticket's existing convention).
-- **Create mode (free text).** Draft a complete new ticket: title, description, Functional + Technical sections, acceptance criteria (all derived from the closed gaps). Show the full preview, approve via `AskUserQuestion` (Create / Edit / Cancel). On approval: `createJiraIssue` and capture the new key + URL — it becomes the ticket this run is about.
+- **Create mode (free text).** Create the ticket via **`create-jira-work-items`** so it follows the team's mandatory structure (a Feature + a linked Dev `Tarea` + an independent Verification) rather than a lone issue. Draft the Feature description, Functional + Technical detail, and acceptance criteria (all derived from the closed gaps); show the full preview, approve via `AskUserQuestion` (Create / Edit / Cancel). On approval, create the set and capture the **Feature** key + URL — that Feature becomes the ticket this run is about (the Dev task tracks the implementation; the Verification is what `live-testing-plan` later executes).
 
 Either way, the resulting Jira key/URL is carried into the PR body and the recap.
 
@@ -106,7 +105,7 @@ This phase is idempotent: on every wake-up, read the real state (branch, PR, HEA
 1. **No branch/PR yet?** `git fetch origin $BASE`, branch `feature/<ticket-slug>` **from `origin/$BASE`** (freshly fetched — not a stale local `dev`/`develop`), implement the approved plan, run `CHECKS` and fix everything, commit, push, and `gh pr create --base "$BASE"`. The PR body includes **`Closes <jira-key>` (or the Jira URL), the visual-plan link, and a placeholder for the recap link** (filled in Phase 5). Schedule the next wake-up (~270s) to give Greptile time.
 2. **PR exists — still mergeable?** Check every wake-up: `gh pr view <n> --json mergeable,mergeStateStatus`. If `CONFLICTING`/`DIRTY`: `git fetch origin $BASE` + `git rebase origin/$BASE`, resolve (import blocks → keep both sides, alphabetical), re-run `CHECKS`, `git push --force-with-lease`, confirm `MERGEABLE`/`CLEAN`.
 3. **Has Greptile reviewed HEAD?** Compare the PR's HEAD sha to the latest `greptile-apps` review/check. If not yet, post `@greptileai review` once (if none pending), sleep ~270s, exit.
-4. **Greptile reviewed HEAD — run one round of the `greptile-resolve` loop:** read inline comments + Confidence Score, verify each **against the actual code** (read the file, grep callers — verdicts from comment text alone are wrong half the time), fix valid ones + resolve their threads, reply-with-reason to invalid ones (leave open), run `CHECKS`, commit, push, re-request review, sleep ~270s. An **ambiguous** comment is a hard stop — escalate, don't keep cycling.
+4. **Greptile reviewed HEAD — run one round of the `review-pr` loop:** read inline comments + Confidence Score (and any failing CI/CD checks or human/Supabase comments), verify each **against the actual code** (read the file, grep callers — verdicts from comment text alone are wrong half the time), fix valid ones + resolve their threads, reply-with-reason to invalid ones (leave open), run `CHECKS`, commit, push, re-request review, sleep ~270s. An **ambiguous** comment is a hard stop — escalate, don't keep cycling.
 5. **Terminal condition:** Confidence Score **5/5** with no unresolved threads. For repos where Greptile emits no `N/5` (some Python repos: empty review body), the practical terminal is the **`Greptile Review` check green + 0 inline comments, sustained across a re-review** — don't burn rounds waiting for a number that never comes.
 
 **Safety cap: 8 rounds.** Derive the count from the number of `@greptileai` re-review requests on the PR. Hit the cap without a terminal condition → stop and report what's outstanding.

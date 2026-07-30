@@ -1,7 +1,7 @@
 ---
 name: agent-eval-api
 description: Operate the Omniloy Agent Evaluator (Agent Testing Platform) API end-to-end — authenticate, resolve or create agents / personas / evaluators / test configs, launch a test run, poll it to a terminal state, and read back transcripts, scores and pass/fail. Use this whenever the user wants to test or evaluate an AI agent, run an eval, create or reuse a persona / evaluator / test config, launch or cancel a test run, check evaluation results, or mentions "agent evaluator", "evals platform", "test run", "persona", "evaluator", or "omniloy evals". It is also the execution half that `/live-testing-plan` hands off to (it produces the spec, this skill runs it). Usage - "/agent-eval-api test the booking agent" or just describe the agent + criteria to evaluate.
-user_invocable: true
+user-invocable: true
 ---
 
 # Agent Evaluator API — Runbook
