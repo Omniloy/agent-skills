@@ -61,7 +61,13 @@
       "type": "callout",
       "tone": "decision",
       "title": "Decisiones de arquitectura",
-      "body_md": "- **Greenfield real:** se crea y monta todo de 0. Sin importación de historia git, sin migración de código. Cuando un diseño actual es bueno (la cadena de providers STT con fallback del transcriber, el patrón de anonimización espejo cliente/servidor, el guard chain de la API), se **rediseña sobre esa referencia**, citándola.\n- **Un solo asistente con deepagents:** los 4 grafos actuales (scribe, extraction, transcription, coding) desaparecen; sus capacidades son subagentes/tools de un único deep agent con configuración por tenant en la BD nueva. Las salvaguardas del backlog (guardrail de entrada, modo diagnóstico OFF, recuperación neutral, anonimización pre-LLM) se construyen **en el núcleo**, no como parches por grafo.\n- **El SDK conserva el diseño, no el código:** mismo look & feel y patrón de integración (React + web-component), pero reconstruido como workspaces reales — y con mejoras explícitas de diseño, empezando por el **pop-up de inserción/verificación** (SOC-18, SOC-23).\n- **La BD es nueva:** el esquema de sofia-sdk-db es referencia funcional (tenancy his→groups→keys, plantillas versionadas, auditoría hash-chained); la plataforma (Supabase vs Postgres gestionado) es un spike `[needs decision]`.\n- **Login de usuario nuevo:** además de la API key de tenant, el producto incorpora autenticación de usuario vía **JWT o SSO (OIDC)** — spike `[needs decision]`.\n- **Cumplimiento como requisito de primera clase:** residencia UE (inferencia y voz), retención 7 días con borrado verificable, consentimiento, SBOM por release, sellado de salidas con versión de modelo+prompt, y vigilancia poscomercialización — todo viene del backlog SOC, no es un añadido posterior."
+      "body_md": "- **Greenfield real:** se crea y monta todo de 0. Sin importación de historia git, sin migración de código. Cuando un diseño actual es bueno (la cadena de providers STT con fallback del transcriber, el patrón de anonimización espejo cliente/servidor, el guard chain de la API), se **rediseña sobre esa referencia**, citándola.\n- **Un solo asistente con deepagents:** los 4 grafos actuales (scribe, extraction, transcription, coding) desaparecen; sus capacidades son subagentes/tools de un único deep agent con configuración por tenant en la BD nueva. Las salvaguardas del backlog (guardrail de entrada, modo diagnóstico OFF, recuperación neutral, anonimización pre-LLM) se construyen **en el núcleo**, no como parches por grafo.\n- **El SDK conserva el diseño, no el código:** mismo look & feel y patrón de integración (React + web-component), pero reconstruido como workspaces reales — y con mejoras explícitas de diseño, empezando por el **pop-up de inserción/verificación** (SOC-18, SOC-23).\n- **Distribución del SDK sin exponer el fuente:** el desarrollo vive en el monorepo (privado); a un **repo de distribución** separado solo llegan los builds, el changelog, el README y el manifest de dependencias. El PR a ese repo se **automatiza en cada build**; la **publicación es manual** (un humano revisa, mergea y publica).\n- **La BD es nueva:** el esquema de sofia-sdk-db es referencia funcional (tenancy his→groups→keys, plantillas versionadas, auditoría hash-chained); la plataforma (Supabase vs Postgres gestionado) es un spike `[needs decision]`.\n- **Login de usuario nuevo:** además de la API key de tenant, el producto incorpora autenticación de usuario vía **JWT o SSO (OIDC)** — spike `[needs decision]`.\n- **Cumplimiento como requisito de primera clase:** residencia UE (inferencia y voz), retención 7 días con borrado verificable, consentimiento, SBOM por release, sellado de salidas con versión de modelo+prompt, y vigilancia poscomercialización — todo viene del backlog SOC, no es un añadido posterior."
+    },
+    {
+      "type": "callout",
+      "tone": "info",
+      "title": "Cómo aterriza este plan en Jira (Feature ← Tareas + Verificación, sin subtareas)",
+      "body_md": "El backlog vive en Jira y sigue la estructura del equipo: cada **Feature** (SOC-1…64) tendrá **tareas técnicas** (tipo *Tarea*) **y de Verificación** enlazadas como issues independientes (`Relates`), **nunca subtareas**.\n\n- Las **sub-issues de este plan son la cantera de las Tareas técnicas**: cada una cita en sus `prd_refs` las Features SOC que implementa; al crearlas en Jira, cada sub-issue se convierte en una o más *Tareas* enlazadas a su(s) Feature(s). Una sub-issue transversal (p. ej. E3.4 anonimización) se enlaza a todas las Features a las que da servicio.\n- Las **Verifications ya existen** (SOC-65…128, espejo 1:1 de cada Feature): se enlazan a su Feature como tarea de verificación y se ejecutan con la maquinaria de E11 (suites gold-standard y harness de integración). Donde haga falta granularidad extra, se crean tareas de verificación adicionales — siempre enlazadas, no subtareas.\n- El skill `create-jira-work-items` del equipo ya implementa este patrón (Feature + Tarea + Verificación con `Relates`); la creación masiva desde este manifest debe seguirlo."
     },
     {
       "type": "table",
@@ -90,7 +96,7 @@
       "title": "Layout objetivo del monorepo",
       "entries": [
         { "path": "packages/contracts/", "change": "added", "note": "JSON Schema → tipos TS + Pydantic: contexto de paciente del HIS (con marca temporal), WS de transcripción, extracción, roles, auth" },
-        { "path": "packages/sdk/", "change": "added", "note": "widget nuevo (react + webcomponent como workspaces reales) conservando el diseño actual; pop-up de inserción rediseñado" },
+        { "path": "packages/sdk/", "change": "added", "note": "widget nuevo (react + webcomponent como workspaces reales) conservando el diseño actual; pop-up de inserción rediseñado. El fuente NO se publica: distribución vía repo de builds con PR automatizado" },
         { "path": "apps/api/", "change": "added", "note": "gateway multi-tenant: auth API key + JWT/SSO, guard chain, capa repositorio sobre la BD nueva" },
         { "path": "apps/transcriber/", "change": "added", "note": "servicio STT nuevo: providers UE con fallback, diarización por roles, realtime + batch autoritativo" },
         { "path": "apps/assistant/", "change": "added", "note": "deep agent único (deepagents): subagentes resumen/nota/guías/coding + guardrails de núcleo" },
@@ -183,6 +189,7 @@
     "Proveedores STT con residencia UE garantizada (SOC-46): confirmar Soniox/Deepgram EU u alternativas, para realtime Y batch. [needs decision]",
     "Contrato con el integrador HIS: varias features son condicionales a lo que el HIS pueda compartir (fechas SOC-14/58, consentimiento SOC-56, notas del médico SOC-22) — definir los niveles de integración soportados y su negociación por tenant.",
     "Nombre/ubicación del repo destino: se asume Omniloy/sofia-care — confirmar antes de crear issues.",
+    "RESUELTO — Repo de distribución del SDK: se creará un repositorio NUEVO solo para las releases (builds + changelog + README + dependencias, sin fuente). Pendiente: nombre y política de acceso, antes de E6.5.",
     "¿El dev-portal (administración de tenants) entra en el monorepo o queda fuera en esta fase? El plan actual lo deja FUERA.",
     "Estrategia regulatoria: el backlog está escrito con lenguaje de producto sanitario (ISO 14971, IFU, vigilancia poscomercialización) — confirmar el marco de clasificación previsto (MDR clase I/IIa u otro) porque condiciona la documentación técnica de E11."
   ],
@@ -600,7 +607,7 @@
     {
       "key": "e6-sdk",
       "title": "E6 · SDK (widget)",
-      "summary_md": "El widget nuevo que el HIS embebe: **conserva el diseño actual** (look & feel y patrón react + web-component) pero con **código nuevo** en workspaces reales, y con los requisitos de widget del backlog de serie: **estado degradado/caído inequívoco sin depender del integrador** (SOC-8), disclaimer permanente (SOC-35), versión + manual/IFU accesibles (SOC-39, SOC-44), **canal de alertas en un clic sin PHI** (SOC-41, SOC-43) y **aislamiento de fallos** — un fallo del widget jamás rompe el HIS (SOC-60).",
+      "summary_md": "El widget nuevo que el HIS embebe: **conserva el diseño actual** (look & feel y patrón react + web-component) pero con **código nuevo** en workspaces reales, y con los requisitos de widget del backlog de serie: **estado degradado/caído inequívoco sin depender del integrador** (SOC-8), disclaimer permanente (SOC-35), versión + manual/IFU accesibles (SOC-39, SOC-44), **canal de alertas en un clic sin PHI** (SOC-41, SOC-43) y **aislamiento de fallos** — un fallo del widget jamás rompe el HIS (SOC-60).\n\n**Modelo de distribución:** el fuente vive solo en el monorepo. Cada build abre un **PR automatizado** contra el repo de distribución (solo builds + changelog + README + manifest de dependencias); la **publicación es manual** tras revisión humana (E6.5).",
       "labels": ["epic", "phase-1", "area:sdk"],
       "milestone": "Fase 1 — Resumen del paciente y asistente",
       "prd_refs": ["SOC-8 (RNF-USA-004)", "SOC-35 (RNF-USA-001)", "SOC-60 (RF-M3-004)", "SOC-43 (RNF-USA-002)"],
@@ -608,11 +615,11 @@
         {
           "title": "E6.1 · Widget nuevo conservando el diseño actual (workspaces react + webcomponent)",
           "functional_md": "El médico reconoce la interfaz (mismo diseño y patrón de integración que el SDK actual) pero el código es nuevo: dos paquetes de workspace reales — variante React y web-component — que comparten el core, con el login de usuario (E2.1) integrado en el arranque.",
-          "technical_md": "`packages/sdk/{core,react,webcomponent}` como workspaces reales (la referencia visual/UX es sofia-sdk-core; su mecánica de build por copia NO se replica). CSS de Shadow DOM como paso de build. Cliente de la API con los tipos de contracts, flujo de auth según E2.1, i18n desde el inicio. Consumo del resumen por streaming (E4.6). Suite de componentes con tests visuales; publicación automatizada con changesets.",
+          "technical_md": "`packages/sdk/{core,react,webcomponent}` como workspaces reales (la referencia visual/UX es sofia-sdk-core; su mecánica de build por copia NO se replica). CSS de Shadow DOM como paso de build. Cliente de la API con los tipos de contracts, flujo de auth según E2.1, i18n desde el inicio. Consumo del resumen por streaming (E4.6). Suite de componentes con tests visuales; versionado con changesets — la distribución externa va por el pipeline del repo de builds (E6.5), nunca por publish directo desde el monorepo.",
           "acceptance": [
             "Ambas variantes se construyen desde el core compartido sin pasos de copia",
             "Paridad visual con el diseño actual validada sobre las pantallas núcleo",
-            "Login integrado según la decisión E2.1 y publicación a npm automatizada"
+            "Login integrado según la decisión E2.1 y versionado con changesets"
           ],
           "prd_refs": ["Referencia: sofia-sdk-core (diseño y patrón de integración)", "Decisión del equipo: conservar diseño, mejorar puntualmente"],
           "labels": ["phase-1", "area:sdk", "type:feature"],
@@ -658,6 +665,20 @@
           ],
           "prd_refs": ["SOC-41 (RNF-AUD-002)", "SOC-43 (RNF-USA-002)"],
           "labels": ["phase-1", "area:sdk", "type:feature"],
+          "milestone": "Fase 1 — Resumen del paciente y asistente",
+          "estimate": "M"
+        },
+        {
+          "title": "E6.5 · Pipeline de distribución: PR automatizado al repo de builds, publicación manual",
+          "functional_md": "El código fuente del SDK nunca sale del monorepo: los integradores consumen un repo de distribución que solo contiene los builds, el changelog, el README y el manifest de dependencias. Cada build de release abre automáticamente un PR contra ese repo con todo actualizado; una persona lo revisa, lo mergea y decide cuándo publicar — la publicación es siempre manual.",
+          "technical_md": "Workflow de release en el monorepo: al cortar versión (changesets, E6.1) se construyen ambas variantes (react + webcomponent) y un job abre un PR contra el repo de distribución — un repo NUEVO que se creará solo para las releases del SDK (el repo de releases actual, sofia-sdk, sirve de referencia del patrón) — que contiene SOLO artefactos: `dist/` de cada variante, `package.json` con dependencias/peerDependencies actualizadas, `README.md` de consumo regenerado, `CHANGELOG.md` derivado de los changesets, y checksums/provenance de los artefactos. Verificación en CI del PR de distribución: 0 ficheros fuente (lista de extensiones/paths prohibidos), smoke de instalación del paquete en una app limpia. La publicación (npm publish / release del repo) queda como paso manual documentado en el runbook tras el merge. El sellado de versión de E2.3 y el registro x-sdk-version enlazan cada build distribuido con su commit de origen en el monorepo (trazabilidad sin exponer el fuente).",
+          "acceptance": [
+            "Cada release del SDK abre automáticamente el PR de distribución con dist, changelog, README y dependencias actualizados",
+            "0 ficheros de código fuente en el repo de distribución (check bloqueante en su CI)",
+            "Publicación solo manual tras merge, documentada en runbook; cada build trazable a su commit de origen"
+          ],
+          "prd_refs": ["Decisión del equipo: fuente privado, repo NUEVO de releases, PR automatizado y publicación manual", "Referencia de patrón: sofia-sdk", "SOC-63 (RF-M3-001, trazabilidad de versión)"],
+          "labels": ["phase-1", "area:sdk", "type:infra"],
           "milestone": "Fase 1 — Resumen del paciente y asistente",
           "estimate": "M"
         }

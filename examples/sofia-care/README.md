@@ -28,6 +28,14 @@ Decisions fixed by the team before authoring:
 - **The SDK keeps its current design** (look & feel, react + web-component pattern) but with new
   code and targeted improvements — starting with a **redesigned insertion/verification pop-up**
   (SOC-18, SOC-23).
+- **SDK source stays private**: development happens in the monorepo; a **new repo created only
+  for SDK releases** receives builds + changelog + README + dependency manifest via an
+  **automated PR on each release build**; **publication is manual** after human review (E6.5).
+- **Jira breakdown, no subtasks**: each Feature (SOC-1…64) gets linked technical **"Tarea"**
+  issues and **"Verificación"** issues (`Relates` links, never subtasks — the team's
+  `create-jira-work-items` pattern). This plan's sub-issues are the source for the technical
+  Tareas (each cites the SOC Features it implements); the existing Verifications (SOC-65…128)
+  link to their Feature and are executed by the E11 evals machinery.
 - **The database is new**; platform (Supabase vs plain managed Postgres) is an open spike.
 - **User login via JWT or SSO (OIDC)** is added — open spike `[needs decision]`.
 
@@ -49,7 +57,7 @@ Fase 3 — Transcripción            E9 new realtime transcription (roles, disco
 Fase 4 — Integración y vigilancia E10 HIS contract + orders + staging validation · E11 evals/bias/post-market (runs the 64 Verifications)
 ```
 
-12 epics · 50 sub-issues · 5 milestones · 20 labels.
+12 epics · 51 sub-issues · 5 milestones · 20 labels.
 
 ## Reproduce / continue it
 
