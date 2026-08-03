@@ -31,7 +31,7 @@
   "milestones": [
     {
       "title": "Fase 0 — Fundación",
-      "description": "Monorepo greenfield (nada se importa: se crea y monta todo de 0), paquete de contratos, base de datos nueva (plataforma por decidir), autenticación (API keys rotables + login JWT/SSO por decidir) y CI con SBOM. Los repos actuales son referencia de diseño, no código a portar."
+      "description": "Monorepo greenfield (nada se importa: se crea y monta todo de 0), paquete de contratos, base de datos nueva sobre Supabase self-hosted (validando funciones y crons), autenticación (API keys rotables + login JWT/SSO por decidir) y CI con SBOM. Los repos actuales son referencia de diseño, no código a portar."
     },
     {
       "title": "Fase 1 — Resumen del paciente y asistente",
@@ -61,7 +61,7 @@
       "type": "callout",
       "tone": "decision",
       "title": "Decisiones de arquitectura",
-      "body_md": "- **Greenfield real:** se crea y monta todo de 0. Sin importación de historia git, sin migración de código. Cuando un diseño actual es bueno (la cadena de providers STT con fallback del transcriber, el patrón de anonimización espejo cliente/servidor, el guard chain de la API), se **rediseña sobre esa referencia**, citándola.\n- **Un solo asistente con deepagents:** los 4 grafos actuales (scribe, extraction, transcription, coding) desaparecen; sus capacidades son subagentes/tools de un único deep agent con configuración por tenant en la BD nueva. Las salvaguardas del backlog (guardrail de entrada, modo diagnóstico OFF, recuperación neutral, trazas sin PHI) se construyen **en el núcleo**, no como parches por grafo. La **anonimización PII vive en el cliente (SDK)**: el backend y los modelos solo ven datos ya anonimizados (SOC-21).\n- **El SDK conserva el diseño, no el código:** mismo look & feel y patrón de integración (React + web-component), pero reconstruido como workspaces reales — y con mejoras explícitas de diseño, empezando por el **pop-up de inserción/verificación** (SOC-18, SOC-23).\n- **Distribución del SDK sin exponer el fuente:** el desarrollo vive en el monorepo (privado); a un **repo de distribución** separado solo llegan los builds, el changelog, el README y el manifest de dependencias. El PR a ese repo se **automatiza en cada build**; la **publicación es manual** (un humano revisa, mergea y publica).\n- **La BD es nueva:** el esquema de sofia-sdk-db es referencia funcional (tenancy his→groups→keys, plantillas versionadas, auditoría hash-chained); la plataforma (Supabase vs Postgres gestionado) es un spike `[needs decision]`.\n- **Login de usuario nuevo:** además de la API key de tenant, el producto incorpora autenticación de usuario vía **JWT o SSO (OIDC)** — spike `[needs decision]`.\n- **Cumplimiento como requisito de primera clase:** residencia UE (inferencia y voz), retención 7 días con borrado verificable, consentimiento, SBOM por release, sellado de salidas con versión de modelo+prompt, y vigilancia poscomercialización — todo viene del backlog SOC, no es un añadido posterior."
+      "body_md": "- **Greenfield real:** se crea y monta todo de 0. Sin importación de historia git, sin migración de código. Cuando un diseño actual es bueno (la cadena de providers STT con fallback del transcriber, el patrón de anonimización espejo cliente/servidor, el guard chain de la API), se **rediseña sobre esa referencia**, citándola.\n- **Un solo asistente con deepagents:** los 4 grafos actuales (scribe, extraction, transcription, coding) desaparecen; sus capacidades son subagentes/tools de un único deep agent con configuración por tenant en la BD nueva. Las salvaguardas del backlog (guardrail de entrada, modo diagnóstico OFF, recuperación neutral, trazas sin PHI) se construyen **en el núcleo**, no como parches por grafo. La **anonimización PII vive en el cliente (SDK)**: el backend y los modelos solo ven datos ya anonimizados (SOC-21).\n- **El SDK conserva el diseño, no el código:** mismo look & feel y patrón de integración (React + web-component), pero reconstruido como workspaces reales — y con mejoras explícitas de diseño, empezando por el **pop-up de inserción/verificación** (SOC-18, SOC-23).\n- **Distribución del SDK sin exponer el fuente:** el desarrollo vive en el monorepo (privado); a un **repo de distribución** separado solo llegan los builds, el changelog, el README y el manifest de dependencias. El PR a ese repo se **automatiza en cada build**; la **publicación es manual** (un humano revisa, mergea y publica).\n- **La BD es nueva, sobre Supabase self-hosted:** el esquema de sofia-sdk-db es referencia funcional (tenancy his→groups→keys, plantillas versionadas, auditoría hash-chained); la plataforma está decidida — **Supabase self-hosted** — y solo queda validar en el spike E1.1 que todas las funciones y crons migran bien (edge functions, pg_cron/pg_net).\n- **Login de usuario nuevo:** además de la API key de tenant, el producto incorpora autenticación de usuario vía **JWT o SSO (OIDC)** — spike `[needs decision]`.\n- **Cumplimiento como requisito de primera clase:** residencia UE (inferencia y voz), retención 7 días con borrado verificable, consentimiento, SBOM por release, sellado de salidas con versión de modelo+prompt, y vigilancia poscomercialización — todo viene del backlog SOC, no es un añadido posterior."
     },
     {
       "type": "callout",
@@ -100,7 +100,7 @@
         { "path": "apps/api/", "change": "added", "note": "gateway multi-tenant: auth API key + JWT/SSO, guard chain, capa repositorio sobre la BD nueva" },
         { "path": "apps/transcriber/", "change": "added", "note": "servicio STT nuevo: providers UE con fallback, diarización por roles, realtime + batch autoritativo" },
         { "path": "apps/assistant/", "change": "added", "note": "deep agent único (deepagents): subagentes resumen/nota/guías/coding + guardrails de núcleo" },
-        { "path": "db/", "change": "added", "note": "esquema nuevo + migraciones (plataforma por decidir): tenancy, plantillas versionadas, assistant_config, audit, retención" },
+        { "path": "db/", "change": "added", "note": "esquema nuevo + migraciones sobre Supabase self-hosted: tenancy, plantillas versionadas, assistant_config, audit, retención" },
         { "path": "tests/", "change": "added", "note": "integración cross-servicio con audio fixture + e2e del widget" },
         { "path": "evals/", "change": "added", "note": "suites gold-standard por capacidad, banco de sesgo, release gates — ejecutan las Verifications del Jira" },
         { "path": "infra/", "change": "added", "note": "docker compose dev, CD por servicio, observabilidad PHI-aware, SBOM" }
@@ -183,7 +183,7 @@
     }
   ],
   "open_questions": [
-    "Plataforma de la nueva BD: Supabase de nuevo vs PostgreSQL gestionado sin Supabase → spike E1.1 con ADR. [needs decision]",
+    "RESUELTO — Plataforma de la nueva BD: **Supabase self-hosted**. Pendiente solo la validación del spike E1.1: confirmar que todas las funciones (edge functions) y crons (pg_cron/pg_net) migran y se operan bien en self-hosted.",
     "Login de usuario: JWT propio vs SSO (OIDC con el IdP del centro) — condiciona el contrato SDK↔API y el aprovisionamiento de médicos → spike E2.1. [needs decision]",
     "Serving del deep agent: LangGraph Platform/Cloud vs self-hosted → E3.1. [needs decision]",
     "Proveedores STT con residencia UE garantizada (SOC-46): confirmar Soniox/Deepgram EU u alternativas, para realtime Y batch. [needs decision]",
@@ -263,19 +263,19 @@
     {
       "key": "e1-data",
       "title": "E1 · Plataforma de datos y tenancy",
-      "summary_md": "La base de datos **nueva** del producto: spike de plataforma (`[needs decision]`), esquema greenfield con la tenancy y las plantillas versionadas del producto actual como referencia funcional, **aislamiento por tenant con registro de violaciones** (SOC-61), auditoría a prueba de manipulación, y la **retención de 7 días con borrado verificable** de audio y transcripción (SOC-57) construida en el modelo de datos desde el día uno.",
+      "summary_md": "La base de datos **nueva** del producto sobre **Supabase self-hosted** (decidido; queda validar la migración de edge functions y crons — E1.1), esquema greenfield con la tenancy y las plantillas versionadas del producto actual como referencia funcional, **aislamiento por tenant con registro de violaciones** (SOC-61), auditoría a prueba de manipulación, y la **retención de 7 días con borrado verificable** de audio y transcripción (SOC-57) construida en el modelo de datos desde el día uno.",
       "labels": ["epic", "phase-0", "area:db"],
       "milestone": "Fase 0 — Fundación",
       "prd_refs": ["SOC-61 (RF-M3-002)", "SOC-57 (RNF-DAT-004)", "SOC-46 (RNF-DAT-006)", "Referencia: sofia-sdk-db/DATABASE_ARCHITECTURE.md"],
       "issues": [
         {
-          "title": "E1.1 · Spike: plataforma de la BD (Supabase vs Postgres gestionado) [needs decision]",
-          "functional_md": "El equipo decide con criterios explícitos dónde vive la base de datos nueva: la decisión condiciona quién expone la API de datos, el auth del portal de administración y cómo se implementan cron de retención y funciones.",
-          "technical_md": "ADR comparando (a) Supabase con esquema limpio (PostgREST/GoTrue/RLS) vs (b) PostgreSQL gestionado con la API como única puerta y migraciones propias (Alembic/Drizzle/Atlas). Criterios: RLS y aislamiento por tenant (SOC-61), residencia UE del dato (SOC-46), jobs de retención/borrado verificable (SOC-57), coste, operabilidad K8s, encaje con el login JWT/SSO (E2.1). Bloquea E1.2–E1.4.",
+          "title": "E1.1 · Spike de validación: Supabase self-hosted (funciones y crons)",
+          "functional_md": "La plataforma está decidida: **Supabase self-hosted**. Este spike valida lo único pendiente — que todas las funciones y crons que el producto necesita funcionan en self-hosted — y define cómo se opera el stack en nuestra infraestructura (despliegue, backups, upgrades, residencia UE).",
+          "technical_md": "Validación práctica sobre un despliegue self-hosted real (docker compose / K8s en Azure): (1) **Edge Functions** en el edge-runtime self-hosted — desplegar una función de prueba equivalente a las actuales (el ETL sync-langsmith como caso más exigente) y verificar límites del runtime, secrets y despliegue automatizado por CI (sin pasos manuales de dashboard); (2) **crons** — pg_cron + pg_net disponibles y programables por migración (el patrón actual cron→HTTP→función), incluido el job de retención/borrado de E1.4; (3) GoTrue/PostgREST/Storage/Realtime operativos con RLS (SOC-61) y encaje con el login JWT/SSO (E2.1); (4) operación: backups/PITR, upgrades del stack, monitorización, residencia UE del dato (SOC-46). Entregable: ADR de arquitectura del despliegue + runbook. Bloquea E1.2–E1.4.",
           "acceptance": [
-            "ADR con matriz de criterios y decisión firmada por el equipo",
-            "Impacto documentado sobre auth de usuario, retención y auditoría",
-            "Tooling de migraciones elegido y probado en un walking skeleton"
+            "Edge function de prueba (nivel sync-langsmith) desplegada por CI y funcionando en self-hosted",
+            "Cron programado por migración (pg_cron + pg_net) ejecutándose y verificado, incluido el patrón de retención",
+            "ADR del despliegue self-hosted (backups, upgrades, monitorización, residencia UE) aprobado"
           ],
           "prd_refs": ["SOC-61 (RF-M3-002)", "SOC-57 (RNF-DAT-004)", "Referencia: sofia-sdk-db/AUTHENTICATION_FLOW.md"],
           "labels": ["phase-0", "area:db", "type:spike"],
@@ -299,7 +299,7 @@
         {
           "title": "E1.3 · Aislamiento por tenant con registro de violaciones y auditoría",
           "functional_md": "Ningún dato ni configuración de un centro puede verse desde otro, y cualquier intento queda registrado: el aislamiento es verificable por tests y las violaciones alimentan el audit trail (SOC-61).",
-          "technical_md": "Aislamiento a nivel de BD (RLS por tenant o firmas de repositorio que exigen tenant_id, según E1.1) + suite multi-tenant (≥ 50 casos: lecturas y escrituras cruzadas deben fallar). Registro de toda violación de aislamiento en `audit_log` (hash-chained, mutaciones rechazadas — patrón del sofia_audit_log actual como referencia). Configuración de tenant que active/desactive controles de seguridad clínica requiere doble confirmación y queda auditada (riesgo R-35).",
+          "technical_md": "Aislamiento a nivel de BD con RLS por tenant (Supabase self-hosted, E1.1), reforzado con firmas de repositorio que exigen tenant_id en la API + suite multi-tenant (≥ 50 casos: lecturas y escrituras cruzadas deben fallar). Registro de toda violación de aislamiento en `audit_log` (hash-chained, mutaciones rechazadas — patrón del sofia_audit_log actual como referencia). Configuración de tenant que active/desactive controles de seguridad clínica requiere doble confirmación y queda auditada (riesgo R-35).",
           "acceptance": [
             "0 fugas en la suite multi-tenant de ≥ 50 casos (gate de CI)",
             "100 % de las violaciones de aislamiento registradas en el audit trail",
@@ -313,7 +313,7 @@
         {
           "title": "E1.4 · Retención de 7 días y borrado verificable (audio + transcripción)",
           "functional_md": "El audio y la transcripción de cada consulta se conservan exactamente 7 días naturales para revisión de incidencias y se borran de forma verificable al vencer, con traza de borrado auditable; los centros que lo prefieran pueden borrar la transcripción directamente (SOC-57).",
-          "technical_md": "`purge_at` en el modelo + job de purga (cron según plataforma E1.1) que borra dentro de las 24 h siguientes al vencimiento y escribe la traza en `audit_log`. Política por tenant (borrado inmediato de transcripción opcional). Todo el almacenamiento de audio/transcripción en región UE (SOC-46), verificado por configuración declarativa por despliegue. Excepciones de retención solo con registro aprobado.",
+          "technical_md": "`purge_at` en el modelo + job de purga (pg_cron + pg_net, validados en E1.1) que borra dentro de las 24 h siguientes al vencimiento y escribe la traza en `audit_log`. Política por tenant (borrado inmediato de transcripción opcional). Todo el almacenamiento de audio/transcripción en región UE (SOC-46), verificado por configuración declarativa por despliegue. Excepciones de retención solo con registro aprobado.",
           "acceptance": [
             "100 % de audios/transcripciones borrados en ≤ 24 h tras el plazo, con traza (≥ 3 ciclos verificados)",
             "0 elementos retenidos fuera de plazo sin excepción registrada",

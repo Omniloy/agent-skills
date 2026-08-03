@@ -37,7 +37,9 @@ Decisions fixed by the team before authoring:
   `create-jira-work-items` pattern). This plan's sub-issues are the source for the technical
   Tareas (each cites the SOC Features it implements); the existing Verifications (SOC-65…128)
   link to their Feature and are executed by the E11 evals machinery.
-- **The database is new**; platform (Supabase vs plain managed Postgres) is an open spike.
+- **The database is new, on self-hosted Supabase** (decided); the E1.1 spike only validates
+  that all functions and crons migrate cleanly (edge functions, pg_cron/pg_net) and defines the
+  self-hosted operating model (deploy, backups, upgrades, EU residency).
 - **User login via JWT or SSO (OIDC)** is added — open spike `[needs decision]`.
 
 ## The files
