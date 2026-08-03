@@ -61,7 +61,7 @@
       "type": "callout",
       "tone": "decision",
       "title": "Decisiones de arquitectura",
-      "body_md": "- **Greenfield real:** se crea y monta todo de 0. Sin importación de historia git, sin migración de código. Cuando un diseño actual es bueno (la cadena de providers STT con fallback del transcriber, el patrón de anonimización espejo cliente/servidor, el guard chain de la API), se **rediseña sobre esa referencia**, citándola.\n- **Un solo asistente con deepagents:** los 4 grafos actuales (scribe, extraction, transcription, coding) desaparecen; sus capacidades son subagentes/tools de un único deep agent con configuración por tenant en la BD nueva. Las salvaguardas del backlog (guardrail de entrada, modo diagnóstico OFF, recuperación neutral, anonimización pre-LLM) se construyen **en el núcleo**, no como parches por grafo.\n- **El SDK conserva el diseño, no el código:** mismo look & feel y patrón de integración (React + web-component), pero reconstruido como workspaces reales — y con mejoras explícitas de diseño, empezando por el **pop-up de inserción/verificación** (SOC-18, SOC-23).\n- **Distribución del SDK sin exponer el fuente:** el desarrollo vive en el monorepo (privado); a un **repo de distribución** separado solo llegan los builds, el changelog, el README y el manifest de dependencias. El PR a ese repo se **automatiza en cada build**; la **publicación es manual** (un humano revisa, mergea y publica).\n- **La BD es nueva:** el esquema de sofia-sdk-db es referencia funcional (tenancy his→groups→keys, plantillas versionadas, auditoría hash-chained); la plataforma (Supabase vs Postgres gestionado) es un spike `[needs decision]`.\n- **Login de usuario nuevo:** además de la API key de tenant, el producto incorpora autenticación de usuario vía **JWT o SSO (OIDC)** — spike `[needs decision]`.\n- **Cumplimiento como requisito de primera clase:** residencia UE (inferencia y voz), retención 7 días con borrado verificable, consentimiento, SBOM por release, sellado de salidas con versión de modelo+prompt, y vigilancia poscomercialización — todo viene del backlog SOC, no es un añadido posterior."
+      "body_md": "- **Greenfield real:** se crea y monta todo de 0. Sin importación de historia git, sin migración de código. Cuando un diseño actual es bueno (la cadena de providers STT con fallback del transcriber, el patrón de anonimización espejo cliente/servidor, el guard chain de la API), se **rediseña sobre esa referencia**, citándola.\n- **Un solo asistente con deepagents:** los 4 grafos actuales (scribe, extraction, transcription, coding) desaparecen; sus capacidades son subagentes/tools de un único deep agent con configuración por tenant en la BD nueva. Las salvaguardas del backlog (guardrail de entrada, modo diagnóstico OFF, recuperación neutral, trazas sin PHI) se construyen **en el núcleo**, no como parches por grafo. La **anonimización PII vive en el cliente (SDK)**: el backend y los modelos solo ven datos ya anonimizados (SOC-21).\n- **El SDK conserva el diseño, no el código:** mismo look & feel y patrón de integración (React + web-component), pero reconstruido como workspaces reales — y con mejoras explícitas de diseño, empezando por el **pop-up de inserción/verificación** (SOC-18, SOC-23).\n- **Distribución del SDK sin exponer el fuente:** el desarrollo vive en el monorepo (privado); a un **repo de distribución** separado solo llegan los builds, el changelog, el README y el manifest de dependencias. El PR a ese repo se **automatiza en cada build**; la **publicación es manual** (un humano revisa, mergea y publica).\n- **La BD es nueva:** el esquema de sofia-sdk-db es referencia funcional (tenancy his→groups→keys, plantillas versionadas, auditoría hash-chained); la plataforma (Supabase vs Postgres gestionado) es un spike `[needs decision]`.\n- **Login de usuario nuevo:** además de la API key de tenant, el producto incorpora autenticación de usuario vía **JWT o SSO (OIDC)** — spike `[needs decision]`.\n- **Cumplimiento como requisito de primera clase:** residencia UE (inferencia y voz), retención 7 días con borrado verificable, consentimiento, SBOM por release, sellado de salidas con versión de modelo+prompt, y vigilancia poscomercialización — todo viene del backlog SOC, no es un añadido posterior."
     },
     {
       "type": "callout",
@@ -78,7 +78,7 @@
         ["Salvaguardas clínicas: contradicciones, poblaciones especiales, finalidad, CIE-10", "SOC-9…13", "E5 · Salvaguardas clínicas"],
         ["Edición de nota y campos del informe: NL → campos, pop-up verificación, Apply/Cancel, selección de campos", "SOC-17…25, 30", "E7 · Edición de nota e informe"],
         ["Guías clínicas: fuentes por tenant, búsqueda acotada con citación, no inventar", "SOC-26…29, 36", "E8 · Chat de guías clínicas"],
-        ["Guardrails y fiabilidad IA: entrada, diagnóstico OFF, disclaimer, fallback, versión fijada, anonimización, UE", "SOC-21, 33…35, 37, 39, 40, 45", "E3 · Núcleo del asistente"],
+        ["Guardrails y fiabilidad IA: entrada, diagnóstico OFF, disclaimer, fallback, versión fijada, UE; anonimización en el cliente", "SOC-21, 33…35, 37, 39, 40, 45", "E3 · Núcleo del asistente (SOC-21 en cliente → E6 · SDK)"],
         ["Widget: degradado visible, disclaimer, IFU/versión, alertas del médico, aislamiento de fallos", "SOC-8, 35, 39, 41, 43, 44, 60", "E6 · SDK (widget)"],
         ["Transcripción: roles verificables, desconexiones, edición, definitiva única, extracción en vivo, consentimiento, calidad, retención", "SOC-49…57, 46", "E9 · Transcripción"],
         ["Integración HIS: contexto temporal, peticiones prueba/cita, staging, versionado SDK, credenciales", "SOC-47, 58, 61…64", "E2 · Auth y credenciales / E10 · Integración HIS"],
@@ -107,10 +107,10 @@
       ]
     },
     {
-      "type": "mermaid",
+      "type": "diagram",
       "title": "El deep agent único y sus salvaguardas (deepagents · LangGraph)",
-      "caption": "Las capacidades del backlog SOC como subagentes/tools; los guardrails clínicos viven en el núcleo y aplican a todo flujo.",
-      "source": "flowchart TB\n  API[apps/api] -->|peticion + config tenant| GR[Guardrail de entrada<br/>intencion · fuera de finalidad · prompt injection · SOC-33/12/4]\n  GR --> DA[Deep agent unico<br/>anonimizacion pre-LLM SOC-21 · inferencia UE SOC-45<br/>diagnostico OFF SOC-34 · version modelo fijada SOC-40]\n  DA --> S1[Subagente resumen<br/>SOC-1..7: checklist secciones · origen por afirmacion · panel cobertura]\n  DA --> S2[Subagente nota clinica<br/>SOC-17..25: NL a campos · changed_fields · nunca silencioso]\n  DA --> S3[Subagente guias<br/>SOC-26..29/36: fuentes curadas · citacion real · no inventar]\n  DA --> S4[Subagente CIE-10<br/>SOC-13: codigo preciso + confirmacion del medico]\n  S1 --> V[Verificacion de fundamentacion<br/>no fundamentado <= 1% · contradicciones SOC-9/10]\n  DA --> CFG[(config por tenant en db/)]\n  DA --> CKPT[(checkpointer Postgres)]"
+      "caption": "Las capacidades del backlog SOC como subagentes/tools. La anonimización PII vive en el cliente (SOC-21); los guardrails clínicos viven en el núcleo del agente y aplican a todo flujo.",
+      "html": "<div class=\"diagram-panel\"><div class=\"diagram-label\">1 · Entrada — la PHI se queda en el cliente</div><div class=\"diagram-row\"><div class=\"diagram-node\">packages/sdk (cliente) · anonimiza PII antes de enviar y restaura al mostrar · SOC-21</div><div class=\"diagram-arrow\">→ payloads ya anonimizados</div><div class=\"diagram-node\">apps/api</div><div class=\"diagram-arrow\">→</div><div class=\"diagram-box\">Guardrail de entrada · intención · fuera de finalidad · prompt injection · SOC-33/12/4</div></div></div><div class=\"diagram-panel\"><div class=\"diagram-label\">2 · Núcleo del deep agent</div><div class=\"diagram-row\"><div class=\"diagram-box\">Deep agent único</div><div class=\"diagram-pill\">verificación de borde: PII residual → rechazo/alerta (E3.4)</div><div class=\"diagram-pill\">inferencia UE · SOC-45</div><div class=\"diagram-pill\">diagnóstico OFF · SOC-34</div><div class=\"diagram-pill\">versión de modelo fijada · SOC-40</div><div class=\"diagram-pill\">trazas sin PHI · SOC-21</div></div><div class=\"diagram-row\"><div class=\"diagram-muted\">estado ↓</div><div class=\"diagram-node\">config por tenant en db/</div><div class=\"diagram-node\">checkpointer Postgres</div></div></div><div class=\"diagram-panel\"><div class=\"diagram-label\">3 · Subagentes por capacidad</div><div class=\"diagram-row\"><div class=\"diagram-node\">Resumen · SOC-1…7 · checklist de secciones · origen por afirmación · panel de cobertura</div><div class=\"diagram-node\">Nota clínica · SOC-17…25 · NL → campos · changed_fields · nunca silencioso</div></div><div class=\"diagram-row\"><div class=\"diagram-node\">Guías · SOC-26…29/36 · fuentes curadas · citación real · no inventar</div><div class=\"diagram-node\">CIE-10 · SOC-13 · código preciso + confirmación del médico</div></div><div class=\"diagram-row\"><div class=\"diagram-arrow\">resumen →</div><div class=\"diagram-box\">Verificación de fundamentación · no fundamentado ≤ 1 % · contradicciones SOC-9/10</div></div></div>"
     },
     {
       "type": "data-model",
@@ -381,7 +381,7 @@
     {
       "key": "e3-assistant-core",
       "title": "E3 · Núcleo del asistente único (deepagents)",
-      "summary_md": "El deep agent que sustituye a los 4 grafos del producto actual, con las **salvaguardas del backlog construidas en el núcleo**: guardrail de entrada con clasificación de intención (SOC-33, SOC-4, SOC-12), capacidad de diagnóstico **desactivada por diseño** con modo de recuperación neutral (SOC-34, SOC-29), **anonimización antes de cualquier LLM** e inferencia solo en la UE (SOC-21, SOC-45), fallback de proveedor (SOC-37) y **versión de modelo fijada** con revalidación y rollback (SOC-40). Los servicios deterministas del producto actual (RAG, pharma, CIE-10, aggregator) se rediseñan como tools sobre su referencia.",
+      "summary_md": "El deep agent que sustituye a los 4 grafos del producto actual, con las **salvaguardas del backlog construidas en el núcleo**: guardrail de entrada con clasificación de intención (SOC-33, SOC-4, SOC-12), capacidad de diagnóstico **desactivada por diseño** con modo de recuperación neutral (SOC-34, SOC-29), inferencia solo en la UE con **verificación en el borde de que los payloads llegan ya anonimizados desde el cliente** (SOC-45, SOC-21 — la anonimización vive en el SDK, E6.6), fallback de proveedor (SOC-37) y **versión de modelo fijada** con revalidación y rollback (SOC-40). Los servicios deterministas del producto actual (RAG, pharma, CIE-10, aggregator) se rediseñan como tools sobre su referencia.",
       "labels": ["epic", "phase-1", "area:assistant"],
       "milestone": "Fase 1 — Resumen del paciente y asistente",
       "prd_refs": ["SOC-33 (RNF-SEG-001)", "SOC-34 (RNF-SEG-002)", "SOC-21 (RF-M1-024)", "SOC-45 (RNF-DAT-001)", "SOC-37 (RNF-IA-003)", "SOC-40 (RNF-IA-008)"],
@@ -429,13 +429,13 @@
           "estimate": "M"
         },
         {
-          "title": "E3.4 · Anonimización pre-LLM, inferencia UE y trazas sin PHI",
-          "functional_md": "Ningún dato personal de salud llega a un modelo sin anonimizar y ninguna inferencia sale de la UE: la transcripción, las instrucciones del médico y los valores se anonimizan antes de cualquier componente de procesamiento y se restauran al devolver el resultado; el contenido de las instrucciones nunca queda en trazas.",
-          "technical_md": "Capa de anonimización en el núcleo del agente (no por subagente): sustitución por valores fake realistas + restauración en la respuesta — el patrón espejo cliente/servidor del producto actual como referencia, ahora definido en `packages/contracts` y aplicado también en el SDK (E6). Inferencia exclusivamente contra despliegues Azure OpenAI región UE (SOC-45), verificado por telemetría (0 llamadas extra-UE al mes). Política de logging PHI default-deny para los tres servicios (lib compartida) con lint/test que la vigila; contenido de instrucciones excluido de trazas (SOC-21).",
+          "title": "E3.4 · Inferencia UE, trazas sin PHI y verificación de anonimización en el borde",
+          "functional_md": "Ninguna inferencia sale de la UE y ningún dato personal de salud llega al backend sin anonimizar: la anonimización ocurre EN EL CLIENTE (SDK, E6.6) antes de enviarse a cualquier componente de procesamiento; el backend lo verifica defensivamente en el borde, y ni las trazas ni los logs contienen jamás PHI ni el contenido de las instrucciones del médico.",
+          "technical_md": "Verificador de PII residual en el borde (API/asistente): detector sobre los payloads entrantes → rechazo o alerta con métrica de fugas — asume que la anonimización ya la hizo el SDK (E6.6) y actúa como segunda barrera. El contrato de anonimización (formato de los placeholders/valores fake) vive en `packages/contracts`, compartido con el cliente para que la verificación y la restauración sean simétricas. Inferencia exclusivamente contra despliegues Azure OpenAI región UE (SOC-45), verificado por telemetría (0 llamadas extra-UE al mes). Política de logging PHI default-deny para los tres servicios (lib compartida) con lint/test que la vigila; contenido de instrucciones excluido de trazas (SOC-21).",
           "acceptance": [
-            "100 % de PHI anonimizada antes del envío, 0 fugas y 0 instrucciones en logs sobre ≥ 200 ediciones (SOC-21)",
+            "0 payloads con PHI residual aceptados sin alerta en la suite de inyección (SOC-21)",
             "100 % de inferencias servidas desde la UE; 0 llamadas extra-UE en telemetría mensual (SOC-45)",
-            "Suite de round-trip anonimizar→restaurar verde en TS y Python (mismos casos)"
+            "0 PHI y 0 contenido de instrucciones en logs/trazas, con verificación automática (SOC-21)"
           ],
           "prd_refs": ["SOC-21 (RF-M1-024)", "SOC-45 (RNF-DAT-001)"],
           "labels": ["phase-1", "area:assistant", "type:feature"],
@@ -607,10 +607,10 @@
     {
       "key": "e6-sdk",
       "title": "E6 · SDK (widget)",
-      "summary_md": "El widget nuevo que el HIS embebe: **conserva el diseño actual** (look & feel y patrón react + web-component) pero con **código nuevo** en workspaces reales, y con los requisitos de widget del backlog de serie: **estado degradado/caído inequívoco sin depender del integrador** (SOC-8), disclaimer permanente (SOC-35), versión + manual/IFU accesibles (SOC-39, SOC-44), **canal de alertas en un clic sin PHI** (SOC-41, SOC-43) y **aislamiento de fallos** — un fallo del widget jamás rompe el HIS (SOC-60).\n\n**Modelo de distribución:** el fuente vive solo en el monorepo. Cada build abre un **PR automatizado** contra el repo de distribución (solo builds + changelog + README + manifest de dependencias); la **publicación es manual** tras revisión humana (E6.5).",
+      "summary_md": "El widget nuevo que el HIS embebe: **conserva el diseño actual** (look & feel y patrón react + web-component) pero con **código nuevo** en workspaces reales, y con los requisitos de widget del backlog de serie: **estado degradado/caído inequívoco sin depender del integrador** (SOC-8), disclaimer permanente (SOC-35), versión + manual/IFU accesibles (SOC-39, SOC-44), **canal de alertas en un clic sin PHI** (SOC-41, SOC-43), **aislamiento de fallos** — un fallo del widget jamás rompe el HIS (SOC-60) — y la **anonimización PII en el cliente** (SOC-21): los datos del paciente se anonimizan antes de salir del HIS y se restauran al mostrar, de modo que el backend solo ve datos anonimizados.\n\n**Modelo de distribución:** el fuente vive solo en el monorepo. Cada build abre un **PR automatizado** contra el repo de distribución (solo builds + changelog + README + manifest de dependencias); la **publicación es manual** tras revisión humana (E6.5).",
       "labels": ["epic", "phase-1", "area:sdk"],
       "milestone": "Fase 1 — Resumen del paciente y asistente",
-      "prd_refs": ["SOC-8 (RNF-USA-004)", "SOC-35 (RNF-USA-001)", "SOC-60 (RF-M3-004)", "SOC-43 (RNF-USA-002)"],
+      "prd_refs": ["SOC-8 (RNF-USA-004)", "SOC-35 (RNF-USA-001)", "SOC-60 (RF-M3-004)", "SOC-43 (RNF-USA-002)", "SOC-21 (RF-M1-024)"],
       "issues": [
         {
           "title": "E6.1 · Widget nuevo conservando el diseño actual (workspaces react + webcomponent)",
@@ -681,6 +681,20 @@
           "labels": ["phase-1", "area:sdk", "type:infra"],
           "milestone": "Fase 1 — Resumen del paciente y asistente",
           "estimate": "M"
+        },
+        {
+          "title": "E6.6 · Anonimización PII en el cliente",
+          "functional_md": "La transcripción, las instrucciones del médico y los valores del paciente se anonimizan EN EL CLIENTE antes de salir del HIS hacia cualquier componente de procesamiento, y se restauran también en el cliente al mostrar los resultados: el backend y los modelos solo ven datos anonimizados, y el mapa de valores reales nunca abandona el navegador.",
+          "technical_md": "Módulo de anonimización del SDK aplicado a TODO envío (REST y WS): sustitución de identificadores por valores fake realistas antes de salir, restauración simétrica en el render. El mapa real↔fake vive solo en memoria del cliente. El formato de placeholders es contrato compartido en `packages/contracts` con la verificación de borde del backend (E3.4). Referencia de diseño: el patrón actual de `formatPatientData.ts` (hoy espejado a mano con el transcriber) — ahora con una única implementación, en el cliente. Property-based tests de round-trip anonimizar→restaurar y suite de fugas (SOC-21: 100 % anonimizada, 0 fugas, 0 instrucciones en trazas sobre ≥ 200 ediciones).",
+          "acceptance": [
+            "100 % de PHI anonimizada antes de salir del cliente; 0 fugas sobre ≥ 200 ediciones (SOC-21)",
+            "El mapa real↔fake nunca abandona el navegador (verificado en e2e por inspección de tráfico)",
+            "Restauración simétrica en display con suite de round-trip verde"
+          ],
+          "prd_refs": ["SOC-21 (RF-M1-024)", "Referencia: formatPatientData.ts del SDK actual"],
+          "labels": ["phase-1", "area:sdk", "type:feature"],
+          "milestone": "Fase 1 — Resumen del paciente y asistente",
+          "estimate": "M"
         }
       ]
     },
@@ -695,11 +709,11 @@
         {
           "title": "E7.1 · Edición por lenguaje natural con mapeo a campos",
           "functional_md": "El médico dice o escribe «añade que la paciente refiere cefalea desde el lunes» y el sistema propone el cambio en el campo correcto de la plantilla — añadir, corregir o eliminar — con una exactitud de mapeo ≥ 95 %.",
-          "technical_md": "Flujo del subagente de nota: instrucción NL + esquema de plantilla anotado (contracts E0.2) → propuesta de changed_fields tipada. Exactitud instrucción→campo ≥ 95 % sobre ≥ 200 instrucciones (SOC-17), con suite en evals/. Anonimización de instrucciones y valores pre-LLM (aplica E3.4/SOC-21). Referencia de diseño: los modos review/review_chat del transcription_agent actual y su compute_changed_fields.",
+          "technical_md": "Flujo del subagente de nota: instrucción NL + esquema de plantilla anotado (contracts E0.2) → propuesta de changed_fields tipada. Exactitud instrucción→campo ≥ 95 % sobre ≥ 200 instrucciones (SOC-17), con suite en evals/. Las instrucciones y valores llegan ya anonimizados desde el cliente (E6.6/SOC-21), con verificación de borde (E3.4). Referencia de diseño: los modos review/review_chat del transcription_agent actual y su compute_changed_fields.",
           "acceptance": [
             "Exactitud de mapeo ≥ 95 % sobre ≥ 200 instrucciones etiquetadas (SOC-17)",
             "Propuestas emitidas como changed_fields tipados del contrato",
-            "Instrucciones anonimizadas antes de cualquier LLM (SOC-21)"
+            "Instrucciones anonimizadas en el cliente antes del envío (E6.6/SOC-21)"
           ],
           "prd_refs": ["SOC-17 (RF-M1-020)", "SOC-21 (RF-M1-024)"],
           "labels": ["phase-2", "area:assistant", "type:feature"],

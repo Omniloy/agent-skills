@@ -23,8 +23,9 @@ Decisions fixed by the team before authoring:
 
 - **Everything is built from 0** — no code migration, no git-history import.
 - **One assistant, built with deepagents** — the four LangGraph graphs are replaced by a single
-  deep agent; clinical guardrails (input classification, diagnosis OFF, pre-LLM anonymization,
-  EU-only inference) live in its core.
+  deep agent; clinical guardrails (input classification, diagnosis OFF, EU-only inference,
+  PHI-free traces) live in its core. **PII anonymization runs client-side in the SDK** (E6.6,
+  SOC-21) — the backend only ever sees anonymized data, with a defensive edge check (E3.4).
 - **The SDK keeps its current design** (look & feel, react + web-component pattern) but with new
   code and targeted improvements — starting with a **redesigned insertion/verification pop-up**
   (SOC-18, SOC-23).
@@ -57,7 +58,7 @@ Fase 3 — Transcripción            E9 new realtime transcription (roles, disco
 Fase 4 — Integración y vigilancia E10 HIS contract + orders + staging validation · E11 evals/bias/post-market (runs the 64 Verifications)
 ```
 
-12 epics · 51 sub-issues · 5 milestones · 20 labels.
+12 epics · 52 sub-issues · 5 milestones · 20 labels.
 
 ## Reproduce / continue it
 
