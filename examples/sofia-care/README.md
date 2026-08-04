@@ -62,6 +62,29 @@ Fase 4 — Integración y vigilancia E10 HIS contract + orders + staging validat
 
 12 epics · 52 sub-issues · 5 milestones · 20 labels.
 
+## The `.claude/` harness (loops-first development)
+
+[`.claude/`](.claude/) is the **team-visible Claude Code harness** authored for the monorepo —
+copy it as-is to the root of `Omniloy/sofia-care` when the repo exists. It is designed so the
+monorepo is **programmed with loops**, composing with this repo's delivery skills
+(`/ship`, `/epic-loop`, `/review-pr`, `/prd-to-issues`, `/create-jira-work-items`,
+`/visual-recap`, `/release-title-changelog`, `/live-testing-plan`, `/agent-eval-api`):
+
+- **8 project skills** — `quality-gate` (affected-packages static gate), `verify-change`
+  (real smoke, required by the Stop gate), `run-stack` (full local stack with mocks),
+  `add-contract` (contract-first change flow), `new-migration` (Supabase + mandatory RLS test),
+  `soc-task` (SOC Feature → linked Tarea → `/ship`), `sdk-release` (automated PR to the
+  releases repo, manual publication), `isolated-run` (disposable worktree for bypass runs).
+- **4 hooks** — `guard.py` (deny secrets/PHI-fixtures/push-to-main · ask external/destructive),
+  `format_fix.sh` (per-language auto-format), `contracts_codegen.sh` (regenerate types on
+  schema edits), `require_checks.sh` (Stop gate on affected packages, loop-safe via
+  `mark_verified.sh`).
+- **6 agents** — `change-reviewer`, `medical-safety-reviewer` (SOC/ISO-14971 checklist),
+  `deepagent-dev`, `sdk-dev`, `transcriber-dev`, `test-author` — the delegates `/ship` and
+  `/epic-loop` use for implementation and pre-PR review.
+
+See [`.claude/README.md`](.claude/README.md) for the full workflow.
+
 ## Reproduce / continue it
 
 ```bash
