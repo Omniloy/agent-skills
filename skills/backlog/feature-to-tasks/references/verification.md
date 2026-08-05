@@ -1,12 +1,25 @@
-# The Verification standard — defined, deferred
+# The Verification standard — defined, filled in a separate pass
 
-> **The team decided not to create or fill Verifications yet.** This file is the
-> agreed standard for when that work starts. `feature-to-tasks` does not touch
-> `Verification` issues in any mode.
+> **`feature-to-tasks` never creates or edits a `Verification`.** It links to the
+> one that mirrors the Feature, and stops there. Filling them in is its own pass;
+> this file is the agreed standard for when that happens.
 
-It is written down now for one reason: technical tasks should be authored knowing
-what evidence will eventually be demanded of them. A task whose acceptance criteria
-cannot produce that evidence is a task that will need rewriting later.
+The link matters more than it looks. **The end-to-end proof that a ported capability
+works belongs to the Verification, not to the technical task.** That is what lets a
+task's acceptance criteria stay short — the Feature's threshold plus parity with the
+origin repo — instead of duplicating evidence the auditor will then read twice.
+
+Resolve the Verification by requirement label, never by arithmetic on the key: the
+ranges are not a constant offset.
+
+```
+project = SOC AND issuetype = Verification AND labels = RF-M1-001   → SOC-65
+```
+
+The existing Verifications already know the current system is the one under test —
+SOC-65's preconditions name `sofia-sdk-core + sofia-api + sofia-assistants` outright.
+After the port they will name the monorepo instead, and that swap is the visible
+proof that a phase actually landed.
 
 ## What already exists
 

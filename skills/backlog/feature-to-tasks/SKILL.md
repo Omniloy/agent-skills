@@ -1,203 +1,258 @@
 ---
 name: feature-to-tasks
 description: >-
-  Creates and maintains the technical tasks of the Jira SOC board (SofIA Care) to
-  the team's standard. Mode create - decomposes a Feature, or a whole Epic, into N
-  tasks, one per monorepo package, each carrying Requisito, Funcional, Enfoque
-  técnico, Alcance IN/OUT, Puntos de entrada, Contrato, Criterios de aceptación,
-  Comprobación and Riesgos ISO 14971. Mode refine - re-reads an existing ticket and
-  brings it up to date with what has been learned (paths now real, contract closed,
-  approach corrected), showing a section-by-section diff and leaving a comment.
-  Mode audit - re-validates the board against the standard. Dry-run unless --apply.
-  It never assigns anyone, never creates Features, never touches Verifications, and
-  never widens the scope of an existing ticket. Use it whenever someone asks to
-  "crear las tareas técnicas de SOC-n", "descomponer esta feature", "generar el
-  backlog técnico de este epic", "actualizar el ticket con lo que hemos aprendido",
-  or to check whether the SOC tasks still match the standard.
+  Creates and maintains the technical tasks of the Jira SOC board (SofIA Care).
+  The product already exists as unofficial code in the sofia-* repos; these tasks
+  move it into the audited monorepo, one task per package per Feature — typically
+  three to five, never thirty. Each task carries Requisito, Punto de partida (Porte,
+  Reescritura or Nuevo, with the real repo and paths behind it), Alcance IN/OUT,
+  Destino, Criterios de aceptación, Comprobación and Riesgos ISO 14971. Mode crear decomposes a Feature.
+  Mode refinar brings an existing ticket up to date with what has been learned,
+  showing a diff and leaving a comment. It never assigns anyone, never creates
+  Features, never fills Verifications, and never widens the scope of a live ticket.
+  Use it for "crear las tareas técnicas de SOC-n", "descomponer esta feature",
+  "actualizar el ticket con lo que hemos aprendido".
 allowed-tools: Read, Grep, Glob, Bash, AskUserQuestion, mcp__claude_ai_Atlassian__getAccessibleAtlassianResources, mcp__claude_ai_Atlassian__getJiraIssue, mcp__claude_ai_Atlassian__searchJiraIssuesUsingJql, mcp__claude_ai_Atlassian__getJiraProjectIssueTypesMetadata, mcp__claude_ai_Atlassian__createJiraIssue, mcp__claude_ai_Atlassian__editJiraIssue, mcp__claude_ai_Atlassian__addCommentToJiraIssue, mcp__claude_ai_Atlassian__createIssueLink
 user-invocable: true
 ---
 
 # feature-to-tasks
 
-Turns SOC Features into technical tasks an AI can implement without a human
-re-explaining the work, and keeps those tasks true as the code appears.
+## The one thing to understand first
 
-The whole point is that ~150 tickets come out **identical in shape**. That only
-survives if the format is copied rather than remembered, so the templates live in
-`references/` as literal files. Read them; do not write a ticket from memory.
+**The product is already built.** It runs today as `sofia-api`, `sofia-assistants`,
+`sofia-transcriber`, `sofia-sdk-core` and `sofia-sdk-db`. What SOC is doing is
+moving that code into an audited monorepo, in phases, until everything we have now
+exists there under class II control.
 
-| File | What it fixes |
+So a technical task is **not a design exercise**. It starts from something that
+already runs. Nobody re-invents the resumen from a blank page.
+
+**But not everything is a move.** Every task declares which of three kinds it is, on
+the first line of `### Punto de partida`:
+
+| Kind | When | What the origin gives you |
+| --- | --- | --- |
+| `Porte` | The architecture stays and the code moves | The code itself, adapted to the monorepo rules |
+| `Reescritura` | The capability exists but the target architecture is deliberately different — `apps/assistant` as a deep agent is the standing case | The behaviour: prompts, rules, fixtures, clinical cases. Not the structure |
+| `Nuevo` | Nothing behind it — `packages/contracts`, the streaming channel, client-side anonymisation | Nothing. Say so plainly |
+
+Getting the kind wrong is the expensive mistake, because the acceptance criteria
+differ: a `Porte` is proven by the origin's own tests passing unchanged, and asking
+that of a `Reescritura` sets a bar the task cannot clear by design.
+
+A `Reescritura` needs a decision behind it that someone already took — an ADR, a
+Feature, a decision recorded in the foundation task. If there is none, stop and ask.
+That is the line between "the architecture changed on purpose" and this skill
+inventing one.
+
+If a run starts producing architecture decisions nobody took, invented contracts, or
+thirty slices of a Feature, it has drifted.
+
+| File | What it holds |
 | --- | --- |
-| `references/tarea.md` | The nine-section template, per-section rules, three worked examples |
-| `references/monorepo.md` | Package layout and the `just` command contract — the only source for paths and commands |
-| `references/convenciones.md` | Summary, labels, hierarchy, links, fields, rollback |
-| `references/refinado.md` | The live-ticket rules and the anti-scope-creep guardrail |
-| `references/verification.md` | The Verification standard — **deferred, do not act on it** |
+| `references/plantilla.md` | The seven-section template, per-section rules, the worked SOC-1 example |
+| `references/repos.md` | Origin repos → monorepo packages, the `just` contract, labels |
+| `references/verification.md` | The Verification standard — tasks link to them, this skill never fills them |
+
+Read `plantilla.md` and `repos.md` on every run. Do not write a ticket from memory.
 
 ## Input
 
 ```
-/feature-to-tasks SOC-1                  # one Feature → its technical tasks
-/feature-to-tasks E4                     # a whole Epic's Features
-/feature-to-tasks SOC-1 --apply          # actually write to Jira
-/feature-to-tasks refine SOC-201         # bring one ticket up to date
-/feature-to-tasks audit                  # re-validate the whole board
+/feature-to-tasks SOC-1              # one Feature → its technical tasks
+/feature-to-tasks refinar SOC-142    # bring one live ticket up to date
 ```
 
-**Dry-run is the default.** Without `--apply` nothing is written to Jira — the batch
-goes to a file and gets validated there. This is deliberate: the team creates the
-whole backlog in one go with no pilot, so the file is the only place a format
-mistake is cheap to fix.
+Nothing is written to Jira without an explicit approval on screen. There is no
+dry-run file and no format checker: at three to five tasks per Feature the human
+reads them whole, which catches more than a linter ever did.
 
-## What it is not
+## What it does not do
 
-Read this before anything else; most of it is a correction of a previous skill.
+- **It does not assign anyone.** Assignment is human scheduling.
+- **It does not create Features or Epics.** It starts from a Feature that exists on
+  SOC-1…64.
+- **It does not create or fill Verifications.** SOC-65…128 exist; a task *links* to
+  the one that will prove it. Filling them is another pass — `verification.md`.
+- **It does not invent thresholds.** They are copied from the Feature, literally.
+- **It does not decide an architecture.** A `Reescritura` cites the ADR or Feature
+  that decided it; a `Nuevo` says plainly that there is nothing behind it. Neither is
+  permission to design something elaborate on the spot.
+- **It does not widen a live ticket.** Adding a bullet to `IN` means a new task.
 
-- **It does not assign anyone.** No assignee, no reviewer, no verifier. Assignment
-  is human scheduling, unrelated to writing a spec, and guessing it fills the board
-  with wrong owners.
-- **It does not create Features.** It starts from one that exists on SOC-1…64.
-- **It does not create or fill Verifications.** SOC-65…128 are out of scope by team
-  decision. `references/verification.md` documents the standard for later.
-- **It does not create Epics.** Those are a one-off pass; this skill reads them.
-- **It does not invent acceptance criteria or thresholds.** If the Feature carries
-  no measurable criterion, say so and stop.
-- **It does not widen scope on refine.** Adding a bullet to `IN` means a new task.
-- **It does not write to Jira without `--apply` and an explicit approval.**
+## The foundation tasks
 
-## Mode: create
+Before anything can be ported there has to be somewhere to port it to: the monorepo
+scaffold and its `justfile`, CI, the shared contracts, the database with its tenancy
+and retention, auth and SDK versioning.
 
-### 1. Resolve
-
-`getAccessibleAtlassianResources` → `cloudId` for `omniloy.atlassian.net`. Reuse it
-for every call. Project is `SOC`; issue type is `Tarea`. If a call rejects the type
-name, confirm with `getJiraProjectIssueTypesMetadata` — do not guess a synonym.
-
-Print the batch start timestamp now, before anything else:
+That work is real but it hangs off no capability Feature, so this skill does not
+generate it. It follows the same rule anyway — **one task per package** — and it
+should be as few tickets as it can possibly be:
 
 ```
-Lote iniciado: 2026-07-31 09:14 — guarda esta marca, es el selector de rollback
+infra:     monorepo, tooling y CI
+contracts: contratos del producto como fuente única
+db:        tenancy, dominio clínico, aislamiento y retención
+api:       auth, rotación de credenciales y versionado de SDK
 ```
 
-There is no batch label (team decision), so this timestamp plus
-`reporter = currentUser()` is the only way to select the batch afterwards. See
-`references/convenciones.md`.
+Four, not ten. Splitting the foundation by sub-topic is the same mistake as splitting
+a Feature by behaviour: it multiplies tickets that will be built in one sitting by one
+person. Decisions that the existing code already settled — the database platform, the
+agent runtime — are recorded inside the task that carries them, not as separate ADR
+tickets; an ADR is a document, and one ticket per document is how a board fills with
+things nobody closes.
 
-### 2. Read
+Every port task `Blocks` on these. That dependency, not a label, is what says the
+foundation comes first.
 
-- The Feature: `getJiraIssue` with `["summary","description","issuetype","status",
-  "labels","parent","comment","issuelinks"]`. The description carries the user
-  story, the quantitative acceptance criterion, and the ISO 14971 risks — all three
-  feed the task.
-- Its `Relates` links, one hop, lean fields.
-- `examples/sofia-care/manifest.json` — find the issues whose `prd_refs[]` cite this
-  `SOC-n`. Their `functional_md`, `technical_md`, `acceptance[]` and `estimate` are
-  the technical thinking that has already been done. Use it; do not re-derive it.
-- `references/monorepo.md` — the packages and their commands.
+## Mode: crear
+
+### 1. Read the Feature and the code
+
+`getAccessibleAtlassianResources` → `cloudId` for `omniloy.atlassian.net`. Project
+`SOC`, issue type `Tarea`.
+
+Fetch the Feature with `["summary","description","labels","status","issuelinks",
+"comment"]`. Its description carries the user story, the measurable criterion and
+the ISO 14971 risks — the criterion and the risks go into the tasks verbatim.
+
+Then **find the code that already does this**, in the clones under
+`~/Workspace/Omniloy/Sofia/`. Use `ls`, `Glob` and `Grep` against the real trees.
+Paths written into a ticket must have been seen; a plausible-looking path that does
+not exist is worse than no path, because it sends the implementer to the wrong file.
 
 If the Feature's summary is one of the truncated ones (ends in `...`), do not
-propagate it into the task summaries. Write a real title from the description.
+propagate it. Write a real title from the description.
 
-### 3. Decompose
+### 2. Decompose by package, not by behaviour
 
-One task per package the work touches. The hard rule is **one task = one PR that
-leaves the tree green**; the package is the default unit, not the law. A task may
-span packages only when splitting it would break the build or leave dead code — the
-usual case being a shared contract plus its producer and consumer — and then the
-reason goes in `### Enfoque técnico` and the draft carries `"multi_package": true`.
+**One task per monorepo package the Feature touches.** Typically three to five:
+`db`, `api`, `assistant`, `sdk`, sometimes `transcriber` or `contracts`.
 
-Order dependencies as `contracts → producer → consumer` and declare them with
-`Blocks`. Do not rely on creation order.
+The unit is *the whole of that Feature's capability inside that package*, not a
+slice of it. For SOC-1 that means one `assistant` task covering chat, resumen and
+the logic around them — not one task per logic. A task may take several PRs; that
+is fine and is a deliberate reversal of the old one-task-one-PR rule, which is what
+produced thirty tickets per Feature.
 
-Fill `references/tarea.md` for each. Every section, no placeholders. Paths from the
-layout, marked `[previsto]` while the package does not exist. Commands as `just`.
+**If more than six tasks come out, the decomposition is wrong.** Go back.
 
-### 4. Validate
+**Check what a previous Feature already brought across.** The second Feature that
+touches `api` does not re-port the module the first one already moved. Search the
+board for an existing task on the same package citing the same origin module; if it
+exists, the new task declares `Blocks` on it and its `Punto de partida` lists only
+what is missing. This is the rule that keeps 64 Features from becoming 250 tasks.
 
-Write the batch to `feature-to-tasks-<timestamp>.json` and run:
+Order dependencies `contracts → db → api · assistant · transcriber → sdk` and
+declare them with `Blocks`. Do not rely on creation order.
 
-```bash
-python3 scripts/check_ready.py feature-to-tasks-<timestamp>.json
+### 3. Write them
+
+Fill `references/plantilla.md` for each. Every section, no placeholders. Origin
+paths verified against the clone; destination paths from `references/repos.md`,
+marked `[previsto]` while the monorepo package does not exist.
+
+### 4. Approve and create
+
+Show the user every task in full — at this volume, entire and on screen. Then one
+`AskUserQuestion`: Crear / Corregir / Cancelar. The batch is approved as a whole.
+
+Print the creation timestamp before writing anything:
+
+```
+Lote iniciado: 2026-08-05 09:14 — es el selector de rollback
 ```
 
-**If it reports a single error, fix the batch and re-run.** Do not create a partial
-set and do not hand-wave a failure — the checker encodes the Definition of Ready
-agreed in the plan, and at this volume one systematic mistake is 150 mistakes.
+Per task: `createJiraIssue` with `projectKey: SOC`, `issueTypeName: Tarea`,
+`summary`, `description`, `labels`, `priority: Medium`, **no assignee**. Then
+`createIssueLink` `Relates` to every `SOC-n` in `### Requisito`, `Relates` to the
+Verification, and `Blocks` for declared dependencies once both keys exist.
 
-### 5. Approve
+Before creating, check for an existing task on the same package linked to the same
+`SOC-n` and skip it. The anchor is the `SOC-n` plus the package, never a `text ~`
+search.
 
-Show the user:
+## Mode: refinar
 
-- The batch timestamp.
-- A one-line-per-task table: summary, epic, requirement, `Blocks`.
-- **A stratified sample expanded in full — one task per epic.** With no pilot, this
-  is the human's real look at the format before ~150 tickets exist.
-- The checker's summary line.
-
-One `AskUserQuestion`: Approve / Approve with changes / Cancel. Nothing is created
-without an explicit approve, and the batch is approved as a whole — never ticket by
-ticket.
-
-### 6. Create
-
-Only with `--apply` and approval. Per task:
-
-1. `createJiraIssue` — `projectKey: SOC`, `issueTypeName: Tarea`, `summary`,
-   `description`, `parent: <EPIC-KEY>`, `labels`, `priority: Medium`. No assignee.
-2. `createIssueLink` `Relates` to **every** `SOC-n` cited in `### Requisito`.
-3. `createIssueLink` `Blocks` for declared dependencies, once both keys exist.
-
-Be idempotent: before creating, search for an existing task with the same package
-alias linked to the same `SOC-n`, and skip it if found. The anchor is the `SOC-n`
-plus the package, never a `text ~` search.
-
-Report the created keys and repeat the rollback JQL from
-`references/convenciones.md`.
-
-## Mode: refine
-
-Read `references/refinado.md` first — the rules there are the point of this mode.
+A ticket written before the monorepo package exists will not be its own final
+version. It gets corrected when the port reveals something, when a decision moves,
+when a path becomes real.
 
 1. Fetch the issue with its comments.
-2. Parse the nine sections. If it does not match the template, report that and stop;
-   it may predate the standard and deserves a human look, not a silent reformat.
-3. Rebuild the sections from what has been learned.
-4. **Diff section by section, show only what changed.**
-5. `AskUserQuestion`: Apply / Edit / Cancel.
+2. Parse the seven sections. If it does not match the template, report that and
+   stop — it may predate the standard and deserves a human look, not a silent
+   reformat.
+3. Rebuild the sections as **the current agreed state, not a log.** Never append
+   `Update 12/03`. Never add a `### Historial` section.
+4. Diff section by section, show only what changed.
+5. `AskUserQuestion`: Aplicar / Corregir / Cancelar.
 6. On approval: `editJiraIssue` with the full new description, then
-   `addCommentToJiraIssue` with a short note saying what moved and why.
+   `addCommentToJiraIssue` with a short note saying what moved and why. The comment
+   is the history — it carries author and timestamp for free.
 
-Never step 6 without step 5. If the change would add a bullet to `IN`, refuse it and
-offer to open a new task linked to the `SOC-n` that owns that scope.
+Never step 6 without step 5.
 
-## Mode: audit
+### The guardrail: correct detail, never widen scope
 
-Export the live tasks and run the checker over them:
+If the change adds a bullet to `IN`, it is not an update — it is a new task.
+Promoting an `OUT` bullet into `IN` is the same violation wearing a hat, because
+every `OUT` bullet names the `SOC-n` that owns it.
 
-```bash
-python3 scripts/check_ready.py board.json --audit --existing-packages api,contracts
+Loosening a threshold to match what got built is the damaging one: the threshold
+came from the Feature, the Feature from the requirement, and the requirement is
+what gets audited. If the port cannot meet it, that is a finding for product, not
+an edit to the ticket.
+
+Say so and offer the alternative:
+
+> Esto amplía el `IN` de SOC-142. No lo meto ahí — corresponde a SOC-159. ¿Creo la
+> tarea nueva enlazada?
+
+## Board conventions
+
+**Summary** — `<alias>: <qué se construye>`, Spanish, lowercase after the colon, no
+trailing period, max ~70 chars, never ends in `...`, no `SOC-n` inside.
+
+**Labels** — the Feature's requirement ids (`RF-M1-001`, `RNF-DAT-001`) and one
+`area:<alias>`. Nothing else.
+
+No `phase-` label. The milestone is already inside the requirement id — `RF-M1-001`
+*is* M1 — so a phase label is a hand-copy of something the board already knows, and
+hand-copies drift. Ordering comes from `Blocks` links, which are checkable; a
+scheduling axis nobody maintains is worse than none.
+
+**Links** — `Relates` to every Feature cited in `### Requisito`, `Relates` to the
+Verification that will prove it, `Blocks` for dependencies. No `parent`: the Epics
+do not exist on this board, and the Feature is never the parent — that relation is
+`Relates`.
+
+**Rollback** — there is no batch label, so the selector is the creation window:
+
+```
+project = SOC AND issuetype = Tarea
+  AND created >= "YYYY-MM-DD HH:mm" AND reporter = currentUser()
 ```
 
-`--existing-packages` lists the aliases whose package now exists in the monorepo;
-any `[previsto]` still sitting on those becomes an error. Also surfaces `just`
-recipes that no longer exist, thresholds that drifted from the Feature, missing
-`Relates`, and tasks with an assignee.
-
-Report findings grouped by rule with the fix for each. Audit reports; it does not
-edit — hand the list to `refine`.
+**Language** — Spanish in the tickets, matching the 64 Features. Paths, commands and
+contracts inside fenced blocks; Jira mangles them in running text. These reference
+files are English because the repo is.
 
 ## Guardrails
 
-- **Templates are copied, not paraphrased.** Read `references/tarea.md` every run.
-- **Paths and commands come from `references/monorepo.md`.** Never invent either.
-- **`just` only in `### Comprobación`.** The toolchain is mixed TS/Python; the facade
-  is what keeps 150 tickets stable.
-- **Thresholds are copied literally** from the Feature. Paraphrasing one breaks the
+- **The code exists. Find it before writing the ticket.** An origin path that was
+  not seen in the clone does not go in.
+- **One task per package, three to five per Feature.** More than six means the
+  decomposition is wrong.
+- **Do not re-port what a previous task already brought.** Search first, then
+  `Blocks` on it.
+- **Thresholds copied literally** from the Feature. Paraphrasing one breaks the
   audit trail in a regulated product.
-- **Dry-run by default; the whole batch or nothing.**
-- **No assignee, ever.**
-- **Print the batch timestamp before creating.** It is the only rollback selector.
-- **Refine enriches, never widens.**
-- If the Feature is too vague to produce verifiable criteria, stop and say so. A
-  vague task multiplied by 150 is the failure this skill exists to prevent.
+- **The E2E proof is not in the task.** It belongs to the Verification the task
+  links to. The task's criteria are the Feature's thresholds plus parity with what
+  the origin repo does today.
+- **`just` only in `### Comprobación`.** The toolchain is mixed TS/Python.
+- **No assignee, ever.** Not the requester, not a reviewer, not a verifier.
+- **Refinar corrects, never widens.**
