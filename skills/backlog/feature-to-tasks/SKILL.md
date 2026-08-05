@@ -81,31 +81,37 @@ reads them whole, which catches more than a linter ever did.
   permission to design something elaborate on the spot.
 - **It does not widen a live ticket.** Adding a bullet to `IN` means a new task.
 
-## The foundation tasks
+## The foundation task
 
-Before anything can be ported there has to be somewhere to port it to: the monorepo
-scaffold and its `justfile`, CI, the shared contracts, the database with its tenancy
-and retention, auth and SDK versioning.
-
-That work is real but it hangs off no capability Feature, so this skill does not
-generate it. It follows the same rule anyway — **one task per package** — and it
-should be as few tickets as it can possibly be:
+Before anything can be ported there has to be somewhere to port it to. That is
+**one ticket**:
 
 ```
-infra:     monorepo, tooling y CI
-contracts: contratos del producto como fuente única
-db:        tenancy, dominio clínico, aislamiento y retención
-api:       auth, rotación de credenciales y versionado de SDK
+infra: fundación del monorepo — scaffold, justfile, CI y esqueleto de paquetes
 ```
 
-Four, not ten. Splitting the foundation by sub-topic is the same mistake as splitting
-a Feature by behaviour: it multiplies tickets that will be built in one sitting by one
-person. Decisions that the existing code already settled — the database platform, the
-agent runtime — are recorded inside the task that carries them, not as separate ADR
-tickets; an ADR is a document, and one ticket per document is how a board fills with
-things nobody closes.
+One, not ten, and the reason is worth stating because it looks like under-scoping.
+Most of what a foundation ticket used to carry is not foundation at all — it is a
+capability with a Feature of its own:
 
-Every port task `Blocks` on these. That dependency, not a label, is what says the
+| Looks like foundation | Actually comes from |
+| --- | --- |
+| Tenancy and tenant isolation | its Feature, as a `db` task |
+| 7-day retention and verifiable deletion | its Feature, as a `db` task |
+| Auth, credential rotation, SSO | its Feature, as an `api` task |
+| SDK versioning and output sealing | its Feature, as an `api` task |
+| The wire shapes themselves | the Feature that needs each one, as a `contracts` task |
+
+So the foundation ticket is only what belongs to no Feature: the repo, the toolchain
+facade, CI, and empty packages that build. Everything else arrives with the capability
+that requires it, which is also what stops one ticket becoming a quarter of work.
+
+Decisions the existing code already settled — the database platform, the agent
+runtime — are recorded inside the task that carries them, not as separate ADR tickets.
+An ADR is a document, and one ticket per document is how a board fills with things
+nobody closes.
+
+Every other task `Blocks` on this one. That dependency, not a label, is what says the
 foundation comes first.
 
 ## Mode: crear
