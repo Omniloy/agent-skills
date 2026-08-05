@@ -1,9 +1,23 @@
 # Worked example — Sofia Care (Jira backlog + repo review → issues plan)
 
 This folder is a `/prd-to-issues` run for **Sofia Care**, the next generation of Omniloy's
-clinical-assistant product — built **greenfield** in a monorepo (SDK · API · DB · transcriber ·
-single assistant · tests/evals). Nothing from the current codebase is ported: everything is
-rethought and rebuilt from zero.
+clinical-assistant product — a monorepo (SDK · API · DB · transcriber · single assistant ·
+tests/evals).
+
+> **Superseded on the "greenfield" point.** This run assumed nothing would be ported and
+> everything rebuilt from zero. That is not the plan: the product already runs as
+> `sofia-api`, `sofia-assistants`, `sofia-transcriber`, `sofia-sdk-core` and `sofia-sdk-db`,
+> and the monorepo is filled by bringing that code across under class II control, phase by
+> phase. `apps/assistant` is the one deliberate rewrite (deep agent). See
+> [`../../skills/backlog/feature-to-tasks/`](../../skills/backlog/feature-to-tasks/), which
+> was rewritten around that.
+
+> **`skills/ship/`** — the delivery skill for the `sofia-care` monorepo, staged here until
+> the repo exists; the foundation task (SOC-129) copies it to
+> `sofia-care/.claude/skills/ship/`. It is the generic [`core/ship`](../../skills/core/ship/)
+> adapted to a regulated port: it starts from a SOC task instead of creating one, takes
+> `CHECKS` from the ticket's `### Comprobación`, links the PR to Jira through the branch name
+> and the PR title, and treats parity with the origin repo as a gate.
 
 Unlike [`../sonia/`](../sonia/), the "PRD" here is two sources combined:
 
