@@ -3,3 +3,9 @@ __pycache__/
 .DS_Store
 .plan-url
 .epic-loop/
+# Local Pi runtime state
+.atl/
+.ruff_cache/
+# MCP config (contains project-specific secrets)
+.mcp.json
+.mcp.json
