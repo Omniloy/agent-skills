@@ -4,7 +4,9 @@ Copy-paste-friendly examples for the Omniloy Agent Testing Platform API. Replace
 placeholders (`<...>`) with real values. Every example assumes:
 
 ```bash
-BASE="https://mariaevals-dev.api.omniloy.com"   # or http://localhost:8000 for local
+BASE="https://mariaevals.api.omniloy.com"   # or http://localhost:8000 for local
+# NOTE: mariaevals-dev.api.omniloy.com is a SEPARATE deployment with its own
+# database and credentials. Tokens are not interchangeable between the two.
 ```
 
 > The same host serves the web app (SPA) at `/` and the REST API under `/api/...`.
@@ -144,15 +146,19 @@ curl -s "$BASE/api/test-executions?status=running&limit=200" -H "Authorization: 
 
 ---
 
-## Launch a run (query param, NOT a JSON body)
+## Launch a run (JSON body, NOT a query param)
 
 ```bash
-RUN_ID=$(curl -s -X POST "$BASE/api/test-runs?test_config_id=<test_config_id>" \
-  -H "Authorization: Bearer $TOKEN" \
+RUN_ID=$(curl -s -X POST "$BASE/api/test-runs" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"test_config_id": <test_config_id>}' \
   | python3 -c 'import sys,json; print(json.load(sys.stdin)["id"])')
 
 echo "run: $RUN_ID"
 ```
+
+> Passing only `?test_config_id=` returns
+> `422 {"detail":[{"loc":["body","test_config_id"],"msg":"Field required"}]}`.
 
 ## Poll until terminal (completed / failed / cancelled)
 
@@ -189,3 +195,50 @@ curl -s "$BASE/api/test-executions/<execution_id>" -H "Authorization: Bearer $TO
 # Audio for an execution
 curl -s "$BASE/api/audio/<execution_id>" -H "Authorization: Bearer $TOKEN" -o execution.wav
 ```
+
+---
+
+## Re-score an execution without calling again
+
+Fix an evaluator, then re-judge a conversation you already have. Weights are
+required and must sum to exactly 100.
+
+```bash
+curl -s -X POST "$BASE/api/test-executions/<execution_id>/reevaluate" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"evaluator_assignments":[{"evaluator_id":617,"weight":40},
+                                {"evaluator_id":620,"weight":60}]}'
+```
+
+Anything else answers
+`422 {"detail":{"errors":["Weights must sum to exactly 100 (current sum: N)."]}}`.
+
+---
+
+## Read more than the last 100 executions
+
+```bash
+# Executions default to the most recent 100
+curl -s "$BASE/api/test-executions?limit=500" -H "Authorization: Bearer $TOKEN"
+
+# Runs are paginated: {items, total, page, page_size}
+curl -s "$BASE/api/test-runs?page=1&page_size=100" -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
+## Was it the agent's fault? Read the metrics
+
+```bash
+curl -s "$BASE/api/test-executions/<execution_id>" -H "Authorization: Bearer $TOKEN" \
+  | python3 -c '
+import sys, json, ast, statistics as st
+m = json.load(sys.stdin)["metrics"]
+m = ast.literal_eval(m) if isinstance(m, str) else m
+rt = m["response_times_ms"]["all_time_to_first_audio_ms"]
+print(f"turns={m[\'conversation_turns\']} tools={m[\'tool_calls_count\']} cer={m[\'cer\']}%")
+print(f"agent replies: p50={st.median(rt)/1000:.1f}s  peak={max(rt)/1000:.1f}s  over 10s={sum(1 for x in rt if x>10000)}")'
+```
+
+A peak of tens of seconds means the agent stalled — the persona had nothing to do
+with it, and no amount of persona rewriting will fix that execution.
