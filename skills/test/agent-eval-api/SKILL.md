@@ -11,6 +11,10 @@ Follow this order without skipping steps.
 
 > For complete curl examples, see [references/curl-examples.md](references/curl-examples.md).
 > For a quick endpoint table, see [references/endpoint-reference.md](references/endpoint-reference.md).
+> **Before writing any persona or evaluator prompt**, read
+> [references/persona-and-judge-recipes.md](references/persona-and-judge-recipes.md).
+> Launching a run is the easy half; most of the time on a real campaign goes into
+> personas that misread the agent and evaluators that judge the wrong thing.
 
 ---
 
@@ -22,6 +26,11 @@ Follow this order without skipping steps.
 4. **`AI_generated-` prefix** — every new resource created by AI must start with that prefix.
 5. **Concurrency** — max 2 simultaneous runs. If you pin `caller_phone_number`, set `max_concurrency = 1`.
 6. **If the user already named the agent**, don't ask again.
+7. **A failing evaluator is not a failing agent.** Before reporting a defect,
+   check in this order: did the persona misunderstand or mispronounce something,
+   is the evaluator judging outside its scope, and only then, did the agent
+   actually do it wrong. See
+   [references/persona-and-judge-recipes.md](references/persona-and-judge-recipes.md).
 
 ---
 
@@ -46,12 +55,24 @@ Follow this order without skipping steps.
 
 ## 3. Base URL and auth
 
-- Production / staging: `https://mariaevals-dev.api.omniloy.com`
+- **Default: `https://mariaevals.api.omniloy.com`** — this is the platform the
+  user sees, and the one to use unless they say otherwise.
 - Local: `http://localhost:8000`
 
-> The host `https://mariaevals-dev.api.omniloy.com` serves both the web app (the
-> "Agent Testing Platform" SPA at `/`) and the REST API under `/api/...`. Always
-> hit the `/api/...` paths — the bare paths return the SPA's HTML, not JSON.
+> `https://mariaevals-dev.api.omniloy.com` is a **separate deployment with its own
+> database and its own credentials** — not an alias. A token issued by one host
+> returns `401` on the other, and resources you create there won't appear in the
+> platform the user is looking at. Only use it if the user asks for it by name.
+
+> Each host serves both the web app (the "Agent Testing Platform" SPA at `/`) and
+> the REST API under `/api/...`. Always hit the `/api/...` paths — the bare paths
+> return the SPA's HTML, not JSON.
+
+> **Quotes can trip a WAF.** There is a web application firewall in front of the
+> API that answers a bare `403 Access Forbidden` (an HTML body, not the JSON
+> `{"detail": ...}` the API returns) for some payloads containing quote
+> characters. If a `PUT`/`POST` that looks correct gets that, rewrite the prompt
+> or persona text without quotes rather than retrying.
 
 Authenticate with `POST /api/auth/token`, sending a JSON body with `email` and
 `password`, and use the returned `access_token` as a Bearer token on every
@@ -77,10 +98,44 @@ subsequent request. If you get a `401`, re-authenticate before continuing.
 3. If you create a new one:
    - `persona_type = "llm_conversational"` for conversational tests.
    - A clear, focused `objective`.
-   - `llm_config.stopping_criteria_rules` is required — don't leave it only as free text.
    - Cover at minimum: success, hang up, transfer, authentication loop.
 
-Key fields: `name`, `objective`, `persona_type`, `llm_config`, `client_tag`, `tags`.
+Key fields: `name`, `objective`, `persona_type`, `llm_config`,
+`conversation_script`, `preferred_language`, `client_tag`, `tags`.
+
+### `llm_config` is not optional, and its shape is not obvious
+
+A persona created without a full `llm_config` is accepted by `POST /api/personas`
+and then **every run against it dies about 30 seconds in** with
+`Azure OpenAI rejected the request: invalid request.` — an error that names
+neither the persona nor the missing field. The working shape:
+
+```json
+{
+  "model": "gpt-5.4-mini",
+  "max_turns": 60,
+  "temperature": 0.3,
+  "expected_outcome": "one sentence: what this call should end up doing",
+  "stopping_criteria_mode": "any",
+  "stopping_criteria_rules": [{"text": "hasta luego", "type": "phrase"}]
+}
+```
+
+Two traps in there:
+
+- **`model` is required.** Omit it and the platform forwards a request with no
+  model to Azure, which rejects it. This is the 30-second death above.
+- **`stopping_criteria_rules` holds objects, not strings.** `["the agent said
+  goodbye"]` is the wrong shape; each rule is `{"text": ..., "type": "phrase"}`.
+
+`conversation_script` sets the caller's opening line and is worth setting —
+`[{"step": 1, "text": "Buenos días, quería…", "action": "say"}]`. Without it the
+persona improvises its own opening, which is one more thing that varies between
+runs.
+
+**Before creating a persona from scratch, `GET /api/personas` and copy the shape
+of one that has completed a run recently.** The API accepts payloads the runner
+cannot execute, so schema-valid is not the same as runnable.
 
 ---
 
@@ -123,7 +178,11 @@ Do NOT launch the run without verifying:
 
 ## 9. Launch the run
 
-`POST /api/test-runs?test_config_id={id}` — pass it as a query param, **NOT** a JSON body.
+`POST /api/test-runs` with a **JSON body**: `{"test_config_id": <id>}`.
+
+A query param alone is rejected — the server answers
+`422 {"detail":[{"loc":["body","test_config_id"],"msg":"Field required"}]}`.
+An unknown id answers `404 Test configuration not found`.
 
 Save the `run_id` from the response.
 
@@ -148,6 +207,48 @@ Read at minimum: `status`, `score`, `passed`, `transcript`, `evaluation_results`
 
 Audio: `GET /api/audio/{execution_id}`.
 
+**Listings are capped.** `GET /api/test-executions` returns the most recent 100
+unless you pass `?limit=N` (500 works). `GET /api/test-runs` is paginated
+differently — `?page=N&page_size=100`, and the response is
+`{items, total, page, page_size}`. Assuming the default page is everything is how
+you conclude a run never happened.
+
+**`metrics` is where the diagnosis lives.** The execution detail carries a
+`metrics` object that tells you whether a failure was the agent's fault:
+
+| field | what it tells you |
+|---|---|
+| `response_times_ms.all_time_to_first_audio_ms` | per turn, how long the agent took to make a sound after the persona stopped talking. Long tail here = the agent stalled, not that the persona misbehaved |
+| `llm_p50_ttft_s` / `llm_p95_ttft_s` | the agent's own LLM latency |
+| `conversation_turns`, `tool_calls_count` | how far the conversation actually got |
+| `cer` | character error rate of the transcription — a high value means the judges are reading a garbled transcript |
+| `silence_timeout_count`, `overlap_rate` | the persona going quiet, or the two talking over each other |
+
+---
+
+## 11.b Fixing an evaluator without repeating the call
+
+`POST /api/test-executions/{execution_id}/reevaluate` re-scores a **recorded**
+execution against a different set of evaluators:
+
+```json
+{"evaluator_assignments": [{"evaluator_id": 617, "weight": 40},
+                           {"evaluator_id": 620, "weight": 60}]}
+```
+
+The weights are required and **must sum to exactly 100** — the server rejects
+anything else with `Weights must sum to exactly 100 (current sum: N)`.
+
+**This should be the default loop once a conversation reaches the end.** A real
+call costs minutes and can die for reasons that have nothing to do with the
+criterion under test; re-evaluating takes seconds and isolates the evaluator from
+the conversation. Get **one** conversation that finishes, then do all the
+evaluator work on top of it.
+
+Re-evaluate the same execution **twice** before trusting a verdict. An evaluator
+whose scope is loose will happily give 95 and then 20 on identical text; if two
+passes disagree, the fix is the prompt, not the retry.
+
 ---
 
 ## 12. What to do if something fails
@@ -157,7 +258,9 @@ Audio: `GET /api/audio/{execution_id}`.
 | `401` | Re-authenticate |
 | `403` saying a shared resource can't be modified or deleted | Create a new owned resource |
 | Run `failed` | Read `error_message` + the execution detail |
-| Timeout | Raise `timeout_seconds` and retry |
+| Timeout | Raise `timeout_seconds` and retry. Check `metrics.response_times_ms` first: if the agent stalled for tens of seconds, more time only buys a longer failure |
+| `403 Access Forbidden` (HTML, not JSON) | A WAF rejected the payload — rewrite the text without quote characters |
+| An evaluator's verdict contradicts the transcript | Re-evaluate the same execution again; if it flips, tighten the evaluator's scope |
 | Still `pending`/`running` | Keep polling or report |
 
 **Don't close the case without inspecting the detail if there was a failure.**
