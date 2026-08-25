@@ -98,10 +98,44 @@ subsequent request. If you get a `401`, re-authenticate before continuing.
 3. If you create a new one:
    - `persona_type = "llm_conversational"` for conversational tests.
    - A clear, focused `objective`.
-   - `llm_config.stopping_criteria_rules` is required — don't leave it only as free text.
    - Cover at minimum: success, hang up, transfer, authentication loop.
 
-Key fields: `name`, `objective`, `persona_type`, `llm_config`, `client_tag`, `tags`.
+Key fields: `name`, `objective`, `persona_type`, `llm_config`,
+`conversation_script`, `preferred_language`, `client_tag`, `tags`.
+
+### `llm_config` is not optional, and its shape is not obvious
+
+A persona created without a full `llm_config` is accepted by `POST /api/personas`
+and then **every run against it dies about 30 seconds in** with
+`Azure OpenAI rejected the request: invalid request.` — an error that names
+neither the persona nor the missing field. The working shape:
+
+```json
+{
+  "model": "gpt-5.4-mini",
+  "max_turns": 60,
+  "temperature": 0.3,
+  "expected_outcome": "one sentence: what this call should end up doing",
+  "stopping_criteria_mode": "any",
+  "stopping_criteria_rules": [{"text": "hasta luego", "type": "phrase"}]
+}
+```
+
+Two traps in there:
+
+- **`model` is required.** Omit it and the platform forwards a request with no
+  model to Azure, which rejects it. This is the 30-second death above.
+- **`stopping_criteria_rules` holds objects, not strings.** `["the agent said
+  goodbye"]` is the wrong shape; each rule is `{"text": ..., "type": "phrase"}`.
+
+`conversation_script` sets the caller's opening line and is worth setting —
+`[{"step": 1, "text": "Buenos días, quería…", "action": "say"}]`. Without it the
+persona improvises its own opening, which is one more thing that varies between
+runs.
+
+**Before creating a persona from scratch, `GET /api/personas` and copy the shape
+of one that has completed a run recently.** The API accepts payloads the runner
+cannot execute, so schema-valid is not the same as runnable.
 
 ---
 

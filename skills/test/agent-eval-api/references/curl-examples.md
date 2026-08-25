@@ -242,3 +242,39 @@ print(f"agent replies: p50={st.median(rt)/1000:.1f}s  peak={max(rt)/1000:.1f}s  
 
 A peak of tens of seconds means the agent stalled — the persona had nothing to do
 with it, and no amount of persona rewriting will fix that execution.
+
+---
+
+## Create a persona that can actually run
+
+The API accepts a persona without `llm_config`; the runner then kills every
+execution ~30s in with `Azure OpenAI rejected the request: invalid request.`
+Copy this shape, or copy a persona that has completed a run recently.
+
+```bash
+curl -s -X POST "$BASE/api/personas" \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{
+    "name": "AI_generated-<client>-<case>",
+    "display_name": "<short label>",
+    "objective": "<what the caller wants, and how they behave>",
+    "persona_type": "llm_conversational",
+    "preferred_language": "es",
+    "client_tag": "client:<client>",
+    "tags": ["feature:<area>"],
+    "llm_config": {
+      "model": "gpt-5.4-mini",
+      "max_turns": 60,
+      "temperature": 0.3,
+      "expected_outcome": "<one sentence>",
+      "stopping_criteria_mode": "any",
+      "stopping_criteria_rules": [{"text": "hasta luego", "type": "phrase"}]
+    },
+    "conversation_script": [
+      {"step": 1, "text": "<the caller opening line>", "action": "say"}
+    ]
+  }'
+```
+
+> `model` missing → the 30-second death. `stopping_criteria_rules` as plain
+> strings → also wrong; each rule is an object.
