@@ -1,0 +1,94 @@
+{
+  "$comment": "Sofia Care monorepo — team baseline. Personal overrides go in settings.local.json (git-ignored). Hooks load at session start; run /hooks after editing.",
+  "permissions": {
+    "allow": [
+      "Bash(just:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm exec turbo:*)",
+      "Bash(pnpm exec eslint:*)",
+      "Bash(pnpm exec prettier:*)",
+      "Bash(pnpm exec tsc:*)",
+      "Bash(pnpm exec vitest:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run ruff:*)",
+      "Bash(uv run mypy:*)",
+      "Bash(uv sync:*)",
+      "Bash(supabase start:*)",
+      "Bash(supabase db reset:*)",
+      "Bash(supabase status:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(rg:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(curl http://localhost:*)",
+      "Bash(curl http://127.0.0.1:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git reset:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)",
+      "Bash(git clean:*)",
+      "Bash(rm:*)",
+      "Bash(docker:*)",
+      "Bash(docker compose:*)",
+      "Bash(gh:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm install:*)",
+      "Bash(uv add:*)",
+      "Bash(supabase db push:*)",
+      "Bash(supabase functions deploy:*)",
+      "WebFetch",
+      "WebSearch",
+      "Read(./.env)",
+      "Read(**/.env)",
+      "Read(**/.env.local)",
+      "Read(**/.env.production)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.azure/**)",
+      "Read(~/.config/gh/**)",
+      "Read(~/.netrc)",
+      "Read(**/.git-credentials)",
+      "Read(**/fixtures/phi/**)"
+    ],
+    "ask": [],
+    "deny": []
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/format_fix.sh\""
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/contracts_codegen.sh\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/require_checks.sh\"",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}
