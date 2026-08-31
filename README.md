@@ -18,13 +18,16 @@ skills/
   test/      ← verification
     live-testing-plan   design + run a live/QA verification plan for a ticket
     agent-eval-api      run agent evals on the Omniloy Agent Testing Platform (optional)
+    sofia-eval-api      run rubric-based SofIA evals + release gates (optional)
+  ops/       ← production observability
+    note-quality-loop    daily 10% quality sample of generated clinical notes → Slack
   backlog/   ← creating & orchestrating work (tech-lead / planning)
     create-jira-work-items   file the team's Feature + Dev + Verification triad in Jira
     prd-to-issues            turn a PRD into GitHub Epics + sub-issues
     epic-loop                build a whole backlog Epic-by-Epic, autonomously
 ```
 
-**`core/` is the must-have set for any developer.** `test/` you add when you own verification (`agent-eval-api` only if you run agent evals). `backlog/` is for whoever plans or drives the project.
+**`core/` is the must-have set for any developer.** `test/` you add when you own verification (`agent-eval-api` only if you run agent evals). `ops/` you add when you own production observability of the SDK. `backlog/` is for whoever plans or drives the project.
 
 ## The single-ticket flow (the everyday path)
 
@@ -77,9 +80,11 @@ skills/
 | core | **[`release-title-changelog`](skills/core/release-title-changelog/)** | Turns a release's commits into a **headline-style title** (4–8 words) + a **1–2 sentence prose changelog** (never a list). Reads the commit range from a **PR number/URL** (`gh pr view`, the usual release-PR-into-`main` flow), a pasted commit list, or a git range (`git log <tag>..HEAD` / `--merges`). Filters noise, groups by theme, never invents scope. | `/release-title-changelog [PR# or commits]` |
 | test | **[`live-testing-plan`](skills/test/live-testing-plan/)** | Designs a live/QA **verification plan** for a Jira issue: locks the acceptance criteria, asks who runs the tests (Claude against a live server / the Omniloy **evals platform** / the user manually), drafts a mode-tailored plan with setup + step-by-step cases each carrying its own AC, executes when Claude is the runner, and delivers a ✅/⛔ results table with per-AC coverage. Executes the **Verification** ticket that `create-jira-work-items` files. | `/live-testing-plan <KEY-or-URL>` |
 | test | **[`agent-eval-api`](skills/test/agent-eval-api/)** | Operates the Omniloy **Agent Testing Platform** API end-to-end: authenticates, resolves or creates agents / personas / evaluators / test configs (reuse-before-create, `AI_generated-` prefix, shared-vs-owned hygiene), runs pre-flight checks, launches a test run, polls it to a terminal state, and reads back transcripts + `score`/`passed`. The **execution half** that `/live-testing-plan` (evals mode) hands its spec off to. *(Optional — only if you run agent evals.)* | `/agent-eval-api` |
+| test | **[`sofia-eval-api`](skills/test/sofia-eval-api/)** | Operates the **SofIA Evaluator** (`sofia-evals-back`) end-to-end, local or deployed: authenticates with a **least-privilege operator token** (no Supabase session, no access to judge provider keys), resolves or creates **rubrics** / datasets / samples (reuse-before-create, `AI_generated-` prefix, append-only), launches a run, polls it to terminal, and reads back scores **with the per-criterion breakdown** — plus release **gate reports** against a baseline. Rubric surfaces (`coding`, `patient_summary`, `medical_chat`, `note_generation`) come first; the 0–100 legacy judge is flagged as legacy. *(Optional — only if you run SofIA evals.)* | `/sofia-eval-api` |
 | backlog | **[`create-jira-work-items`](skills/backlog/create-jira-work-items/)** | Files the team's **mandatory Jira structure** for any new work: a **Feature** (pinned to an existing Epic) + a linked **Dev task** (`Tarea`) + an **independent Verification** (assigned to someone other than the dev), children linked with `Relates` (not sub-tasks). Resolves site/project/epics/people at runtime, checks for duplicates, drafts everything for approval before creating, then creates Feature → Dev → Verification in order. The Jira intake standard a lone `createJiraIssue` would violate. | `/create-jira-work-items` |
 | backlog | **[`prd-to-issues`](skills/backlog/prd-to-issues/)** | Reads a PRD, authors a structured `manifest.json`, renders a **visual plan** for human approval, then creates the Milestones + Epics + sub-issues + labels + **native sub-issue links** on GitHub via `gh` (idempotent). Every sub-issue carries a **Functional** and **Technical** section + acceptance criteria. | `/prd-to-issues` |
 | backlog | **[`epic-loop`](skills/backlog/epic-loop/)** | Orchestrates an autonomous, Epic-by-Epic build on the **standard issue structure** (Milestone → Epic → sub-issues). Delegates each Epic's code to a subagent, opens one PR, drives the review-bot/CI gate to green (via `/review-pr`), merges, and **keeps the backlog truthful** (closes sub-issues, ticks the Epic task-list, closes the Epic, advances the Milestone). Includes `scripts/backlog.py` (`epics` / `next` / **`audit`** / `review-status`). | `/epic-loop` |
+| ops | **[`note-quality-loop`](skills/ops/note-quality-loop/)** | Runs a **periodic quality loop over the SDK's generated clinical notes** — once daily at 09:00 it samples **10 % of notes per assistant** directly from Supabase (read-only), judges each against the **active SofIA evals rubric** (severity `minor`/`major`/`blocking` assigned by the judge, literal quotes ≤ 200 chars required), aggregates per assistant/template with **deltas vs the previous run**, and publishes a **Slack canvas + short channel message** (default `#sofia-sdk-info`) naming which assistants/templates are failing, with an **escalation mention when an assistant exceeds 15 % `major+`**. Scheduled as a **Desktop scheduled task** (Routines → Local, daily 09:00) or a self-paced Claude `/loop`; dry-run only until a human arms it (`loop_armed`). On request it drafts follow-up emails (never sends). No helper script: the model executes the phases directly via Supabase MCP + Slack MCP following the SKILL.md templates. Requires **Supabase MCP (read-only)** + **Slack MCP**; needs the kickoff to set channel/mention/email-drafts before the first run. | `/note-quality-loop` |
 | — | **`loop`** *(built-in)* | `/loop [interval] <prompt>` — schedules a recurring or **self-paced** prompt. In dynamic mode it runs the task now, then uses `ScheduleWakeup` to re-fire (short while polling a review, long while a background agent works). This is what lets `ship`, `review-pr` (loop mode), and `epic-loop` run autonomously. Built into Claude Code; documented here for completeness. | `/loop` |
 
 ## The issue structure (the contract)
@@ -118,14 +123,15 @@ It flags exactly the "forgot to update it" cases — Epics done-but-still-open, 
 
 ## Installing the skills
 
-Claude Code loads skills from `~/.claude/skills/` (user-level) or `.claude/skills/` (project-level), where each skill is a directory containing a `SKILL.md`. The `core/` `test/` `backlog/` folders here are for **organizing the repo** — install the skills **flat** into `~/.claude/skills/`:
+Claude Code loads skills from `~/.claude/skills/` (user-level) or `.claude/skills/` (project-level), where each skill is a directory containing a `SKILL.md`. The `core/` `test/` `ops/` `backlog/` folders here are for **organizing the repo** — install the skills **flat** into `~/.claude/skills/`:
 
 ```bash
 git clone https://github.com/Omniloy/agent-skills
 cp -R agent-skills/skills/core/*    ~/.claude/skills/
 cp -R agent-skills/skills/test/*    ~/.claude/skills/
+cp -R agent-skills/skills/ops/*     ~/.claude/skills/
 cp -R agent-skills/skills/backlog/* ~/.claude/skills/
-# then in Claude Code:  /ship   /review-pr   /visual-recap   /release-title-changelog   /live-testing-plan   /create-jira-work-items   /prd-to-issues   /epic-loop
+# then in Claude Code:  /ship   /review-pr   /visual-recap   /release-title-changelog   /live-testing-plan   /create-jira-work-items   /prd-to-issues   /epic-loop   /note-quality-loop
 ```
 
 Or install just one tier (e.g. the everyday developer set):
@@ -141,6 +147,7 @@ cp -R agent-skills/skills/core/* ~/.claude/skills/
 - A **review bot** (e.g. Greptile / CodeRabbit) and/or CI on the repo if you want `review-pr` / `ship` / `epic-loop` to drive a quality gate. The default gate detection is Greptile (see `skills/backlog/epic-loop/references/review-gates.md`).
 - For `ship`, `live-testing-plan`, and `create-jira-work-items`: the **Atlassian MCP** connector connected (`getAccessibleAtlassianResources`, `getJiraIssue`, `createJiraIssue`, `createIssueLink`, etc.) — used to fetch/create issues, linked issues, comments, and optionally post a wrap-up comment.
 - For `live-testing-plan` evals mode: the **Omniloy `agent-eval-api`** skill installed and reachable — `live-testing-plan` only produces the spec; `agent-eval-api` executes it.
+- For `note-quality-loop`: the **Supabase MCP** connector connected with `read_only=true` (the DB enforces read-only; auth via OAuth or PAT — see `skills/ops/note-quality-loop/references/auth.md`) and the **Slack MCP** connector connected (canvas + message posting). The **SofIA evals** rubric is resolved via `sofia-eval-api` when available (token `EVALS_SKILL_TOKEN`), otherwise read via Supabase MCP. The kickoff (`/note-quality-loop` first run) writes `~/.claude/note-quality-loop/config.json`.
 - For `visual-recap` (and `ship`'s plan/recap): the **Agent-Native Plan** MCP connector (`plan`) connected.
 - For `ship`: all of the above together, plus a **Greptile** review bot on the repo. Run it under **`/loop`** (`/loop /ship <ticket>`) so the Act-2 gate can self-pace.
 
