@@ -57,11 +57,12 @@ These are good `/ship` runs:
 ## Install
 
 Claude Code loads skills from `~/.claude/skills/` (user-level) or `.claude/skills/`
-(project-level). Copy this skill from the repo:
+(project-level). Link it from a clone of the repo (see the root README — `git pull`
+keeps it up to date):
 
 ```sh
-git clone https://github.com/Omniloy/agent-skills
-cp -R agent-skills/skills/core/ship ~/.claude/skills/
+git clone git@github.com:Omniloy/agent-skills ~/omniloy/agent-skills
+~/omniloy/agent-skills/install.sh core
 # then in Claude Code:  /ship <KEY-or-text>
 ```
 

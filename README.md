@@ -118,21 +118,31 @@ It flags exactly the "forgot to update it" cases — Epics done-but-still-open, 
 
 ## Installing the skills
 
-Claude Code loads skills from `~/.claude/skills/` (user-level) or `.claude/skills/` (project-level), where each skill is a directory containing a `SKILL.md`. The `core/` `test/` `backlog/` folders here are for **organizing the repo** — install the skills **flat** into `~/.claude/skills/`:
+Claude Code loads skills from `~/.claude/skills/` (user-level) or `.claude/skills/` (project-level), where each skill is a directory containing a `SKILL.md`. The `core/` `test/` `backlog/` folders here are for **organizing the repo**, so the skills have to be exposed **flat** in `~/.claude/skills/`. `install.sh` does that with **symlinks** into your clone — no copies, so there is nothing to keep in sync:
 
 ```bash
-git clone https://github.com/Omniloy/agent-skills
-cp -R agent-skills/skills/core/*    ~/.claude/skills/
-cp -R agent-skills/skills/test/*    ~/.claude/skills/
-cp -R agent-skills/skills/backlog/* ~/.claude/skills/
-# then in Claude Code:  /ship   /review-pr   /visual-recap   /release-title-changelog   /live-testing-plan   /create-jira-work-items   /prd-to-issues   /epic-loop
+git clone git@github.com:Omniloy/agent-skills ~/omniloy/agent-skills
+~/omniloy/agent-skills/install.sh
+# then in Claude Code:  /ship   /review-pr   /visual-recap   /release-title-changelog   /live-testing-plan   /create-jira-work-items   /prd-to-issues   /agent-eval-api   /epic-loop
 ```
 
-Or install just one tier (e.g. the everyday developer set):
+**Updating is just `git pull`.** The links point at the clone, so a changed skill is live on the next Claude Code session. `install.sh` also installs `post-merge` / `post-rewrite` git hooks that re-run it after every pull (merge or rebase), so **new** skills get linked and renamed or deleted ones get unlinked without anyone remembering.
+
+To edit a skill, edit it in the clone and open a PR — that is the copy Claude Code is reading.
+
+Or install just some tiers (e.g. the everyday developer set). The hooks remember the choice:
 
 ```bash
-cp -R agent-skills/skills/core/* ~/.claude/skills/
+~/omniloy/agent-skills/install.sh core
 ```
+
+What it does and does not touch:
+
+- A skill already in `~/.claude/skills/` as a **real directory** (e.g. from the old `cp -R` install) is **moved** to `~/.claude/skills.bak/<timestamp>/` and replaced by the link — never deleted.
+- Your own skills, and links that point elsewhere, are left alone.
+- Re-running it is safe. `install.sh --uninstall` removes every link into this repo and the hooks.
+- `CLAUDE_SKILLS_DIR=<dir>` installs somewhere other than `~/.claude/skills/`.
+- If you already have your own `post-merge` / `post-rewrite` hook, it is kept and the script says so; run `./install.sh` by hand after pulls that add skills.
 
 ### Prerequisites
 
