@@ -128,6 +128,9 @@ execution that shows it.
   - the resources by name.
 
   Publish it if others will read it.
+- **Add the campaign to the customer's `WORKLOG.md`** (`maria-workflow-builder` →
+  `references/worklog.md`): the flow version tested, the results, what each red means, and
+  what was learned about personas or the platform.
 - **Re-run `eval_plan.py`** whenever the suite or the flow changes. Drift means re-bootstrap,
   and a new test means deciding: eval, or DROPPED.
 - Commit the module and the manifest in maria-voice (PR title `[MAR-XXXX] …`, in English, no

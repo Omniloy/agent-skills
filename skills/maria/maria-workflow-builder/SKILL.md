@@ -18,7 +18,9 @@ sandbox versions and 5 production pilots in three weeks. The worklog is
    for every edge, verifies against the backend and replays each incident;
 3. **`READINESS.md`**, the production checklist ticked with evidence;
 4. **the promotion files**: SQL generated, rehearsed and rolled back in a throwaway Postgres,
-   applied only with the user's OK.
+   applied only with the user's OK;
+5. **`WORKLOG.md`**, the customer's worklog, written as you go: every version, promotion,
+   pilot and lesson with its evidence (`references/worklog.md`).
 
 Next stages: `maria-workflow-evals` turns the suite into voice evals on the evaluation platform,
 and `maria-prod-monitor` watches the pilot and production.
@@ -34,6 +36,7 @@ and `maria-prod-monitor` watches the pilot and production.
 | `references/versioning-and-promotion.md` | before ANY write to a database; clones, edits, promotion, activation |
 | `references/defect-catalog.md` | triaging a red test, a QA call or a production call |
 | `references/production-checklist.md` | the gate; copy it into the workplan |
+| `references/worklog.md` | from Phase 0, and every time something changes: the worklog format (San Roque's) |
 
 ## Scripts (`scripts/`)
 
@@ -95,6 +98,9 @@ Pick the mode. The phases are the same; the entry point differs.
 4. Create the workplan folder `maria-voice/docs/wip/<customer>_<topic>/`: `WORKPLAN.md`,
    later `BACKEND_CONTRACT.md`, `READINESS.md`, `edit_vN.py`, `promotion/`. `docs/wip` is
    git-excluded, so it is the scratch that survives the session.
+   Start `WORKLOG.md` there (`references/worklog.md`): the state table, and a first phase
+   with what the customer asked for and what the flow looked like on day one. If the flow
+   already has a worklog, read it before anything else and continue it.
 5. Ask the user, once and together, only what remains: business rules the docs do not settle,
    the target environment, and the Jira key for PR titles (`[MAR-XXXX] …`).
 
@@ -135,7 +141,8 @@ Follow `authoring.md`.
   backend and a test transfer number.
 - Every change after that is an `edit_vN.py` in the `flow_edit.py` frame: one version per
   coherent change, one assert per change, and a description with the evidence. Dry-run, read
-  the diff, then `--apply`.
+  the diff, then `--apply`. **In the same turn, add the version to `WORKLOG.md`**:
+  the same text as the `change_description`, under its phase.
 - Write prompts with `authoring.md` §4–§9. Add the common-rules block to every prompt node, and
   translate every spoken fixed text.
 - Run `flow_lint.py` after each version: **0 errors**, and every warning fixed or justified.
@@ -176,7 +183,8 @@ For each reported call:
 5. Then write the flow change, and after it look for the SAME SHAPE elsewhere in the graph:
    `flow_lint.py` plus the outcome matrix. The paths nobody walked have the same defects.
 
-Keep the findings in the workplan. They become the version descriptions and, later, the
+Keep the findings in the workplan and in `WORKLOG.md`, as a phase per pilot or feedback
+batch that ends with its lessons. They become the version descriptions and, later, the
 monitoring skill's labels.
 
 ### Phase 7 · Readiness, promotion, activation
@@ -189,7 +197,9 @@ monitoring skill's labels.
    (`versioning-and-promotion.md` §7). The user applies them, or you do with their explicit
    OK.
 4. Activate at the start of a watched pilot window. After it, go to Phase 6 with the pilot's
-   calls.
+   calls. Log every promotion,
+   activation and deactivation in `WORKLOG.md` with its UTC instant, and update the state table
+   at the top.
 
 ## Finish
 
@@ -200,6 +210,9 @@ Report to the user:
 - the readiness items that remain open and why;
 - the files produced;
 - the PRs, with titles `[MAR-XXXX] …` in English and no Claude attribution.
+
+Update `WORKLOG.md` (state table, chronology, the phase's lessons) before reporting. When a
+defect class shows up in a second customer, promote it into this skill's references.
 
 Record in memory only what is not derivable: the customer's quirks, decisions the user made,
 and where things stand.

@@ -46,6 +46,9 @@ python3 scripts/pilot_watch.py --api-key-id <api_key> --since <activation Z> \
   - an appointment filter hiding live appointments;
   - more than 95 s to list a new appointment;
   - duplicate records.
+
+  Give the pilot its own phase in the customer's `WORKLOG.md` (format:
+  `maria-workflow-builder` → `references/worklog.md`).
 - **A hotfix during a pilot** follows the same path as any change: clone version, test,
   promotion SQL, apply with OK. Keep it minimal (San Roque v43 changed one filter and the
   nodes that read it).
