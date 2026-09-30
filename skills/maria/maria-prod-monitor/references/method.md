@@ -34,7 +34,9 @@ original design and worklog are in maria-voice `docs/wip/hierarchical_taxonomy/`
 
 ## 2. The error-code catalog
 
-`docs/monitoring/catalog.yaml` in maria-voice. It is append-only and reviewed by PR.
+The `codes` table of `monitor.sqlite` (seeded from maria-voice `docs/monitoring/catalog.yaml`).
+Codes are append-only. **A session proposes and a human approves**: the id is allocated
+atomically on approval, so concurrent triage cannot collide (`monitor_store.py`).
 
 - **Code format:** `L<layer>-<DOMAIN>-<NNN>` (`L2-AUTH-003`, `L1-DEPLOY-001`,
   `L3-FLOW-004`). Layer and domain are the small stable part; consumers that do not know a
@@ -55,7 +57,7 @@ original design and worklog are in maria-voice `docs/wip/hierarchical_taxonomy/`
   without any code change. On a trigger:
   1. diff the flow (nodes/edges/tools added/removed/changed) and the code between shas;
   2. propose code additions and deprecations;
-  3. a human approves the catalog release (PR).
+  3. a human approves them (`monitor_store.py approve` / `deprecate`).
 - **Catalog behind flow:** the pass does not stop. It runs degraded, stamps
   `catalog_behind_flow=true`, and codes anchored to surviving nodes keep applying.
 - Detectors only emit codes that exist in the catalog: `_findings.py` validates.
@@ -67,10 +69,11 @@ customer, with a link to the call in the console
 (`https://onestopshop<env>.api.omniloy.com/apps/maria/calls/<call_id>`, `<env>` = `""` /
 `-stg` / `-dev`). Each case ends in exactly one of two places:
 
-1. **a Jira task.** There is something to fix. Map it in `docs/monitoring/tasks.yaml`: code →
-   task, optionally scoped by `tenant` or `calls`, so the report stops listing it as unowned.
-2. **an entry in `docs/monitoring/known_errors.yaml`** (KEDB). There is nothing to fix, and
-   the entry writes down why, so the case is not listed again.
+1. **a Jira task.** There is something to fix. Link it in the store (`tasks` + `task_codes`):
+   code → task, optionally scoped by `tenant` or `calls`, so the report stops listing it as
+   unowned.
+2. **a KEDB entry** (`kedb` table). There is nothing to fix, and the entry writes down why, so
+   the case is not listed again.
    - `decision: normal`: counting it was noise.
    - `known_bug`: it is real and already in Jira.
    - `watch`: marks without hiding.
@@ -79,8 +82,9 @@ customer, with a link to the call in the console
    interpreting is a matcher nobody audits. Hidden cases are counted (`--show-hidden` lists
    them): nothing disappears silently.
 
-That knowledge lives in git, not in a session's memory. It changes what the monitor hides, so
-it is reviewed like code, and it has to travel to miniomni (the final home of this monitor).
+That knowledge lives in the shared store, not in a session's memory. It changes what the
+monitor hides, so every row records who decided and when. The store has to travel to
+miniomni (the final home of this monitor), which is why it is a single portable file.
 
 ## 4. One pass, step by step
 

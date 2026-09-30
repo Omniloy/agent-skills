@@ -20,7 +20,8 @@ production week.
 | what | where |
 |---|---|
 | scripts (this skill) | `scripts/monitor.sh`, `scripts/collectors/*`, `scripts/argo/*`, `scripts/sina/reclassify_auth.py`, `scripts/pilot_watch.py`, `scripts/pilot_report.py` |
-| reviewed knowledge | maria-voice `docs/monitoring/`: `catalog.yaml` (error codes, append-only), `known_errors.yaml` (KEDB), `tasks.yaml` (code → Jira). Changed by PR |
+| shared memory | **`monitor.sqlite`** (`MARIA_MONITOR_DB`, default `~/.config/maria-monitor/monitor.sqlite`), managed by `scripts/collectors/monitor_store.py`: error codes and proposals, KEDB decisions, Jira tasks ↔ codes, and the history of every pass. Source of truth once it exists; the collectors read it first |
+| seed / snapshot | maria-voice `docs/monitoring/*.yaml`: what the store was seeded from (`import-yaml`) and what `export-yaml` writes for a reviewable diff |
 | private (patient data, credentials) | `~/.config/maria-monitor/` (`MARIA_MONITOR_PRIVATE`): `argo.env` (`ARGO_USR`/`ARGO_PASS`), `auth_review_*.json`, `state.json`. **Never in a repository** |
 | paths | `scripts/collectors/_paths.py`: `MARIA_VOICE_ROOT`, `MARIA_REPOS_ROOT`, `MARIA_MONITOR_DATA`, `MARIA_CORE_ENV_PATH` override the autodetection |
 
@@ -38,7 +39,7 @@ production week.
    through PostgREST GET, logs through Argo GET or `az` queries.
 2. **The only writes, each with an explicit OK:**
    - a Jira task or comment (MAR, under MAR-2);
-   - a PR to `docs/monitoring/`;
+   - writes to `monitor.sqlite` (proposals, decisions, task links, the run history);
    - a Slack post.
 
    `notify.py` drafts `slack.txt` and never sends it.
@@ -48,6 +49,11 @@ production week.
 5. **Logs first, and fast.** Argo loses a pod's log when it rotates, so download before
    querying calls, and pull a call's logs as soon as it matters.
 6. **Every case ends in Jira or in the KEDB**, never in "noted".
+7. **A session never assigns an error code.** It runs `monitor_store.py similar`, then either
+   adds its call to an existing code or proposal (`add-example`) or `propose`s a new one.
+   Approval, which allocates the id, is the user's: `approve … --by <name>`. This is what
+   keeps two people triaging at the same time from coining two codes for one failure, or
+   one id for two.
 
 ## Procedure
 
@@ -70,12 +76,15 @@ production week.
    - read the bundle and the logs;
    - classify it with `method.md` §1, and for flow issues with `maria-workflow-builder`'s
      `defect-catalog.md`;
-   - decide **Jira task** (create it with the user's OK, then map it in `tasks.yaml`) or
-     **KEDB entry** (`normal` / `known_bug` / `watch`, with an exact matcher and the reason).
+   - decide **Jira task**: create it with the user's OK, then `task-add` + `task-link` the code,
+     scoped by tenant or calls when the task only covers some of them; or
+   - decide **KEDB entry** (`kedb-add`: `normal` / `known_bug` / `watch`, with an exact
+     matcher, `unless` exceptions and the reason).
 
    Findings whose cause is the flow design go to `maria-workflow-builder` as fix-mode input.
-5. **Residue**: cluster "goal not met, no code". A cluster of ≥3 in 7 days is a candidate code;
-   propose it in a catalog PR.
+5. **Residue**: cluster "goal not met, no code". For a cluster of ≥3 in 7 days, check
+   `similar` and `proposals` first, then `propose` it with its example calls. The user reviews
+   `proposals` and approves, merges or rejects.
 6. **Publish** `parte.html` as an artifact for the team, and show the drafted `slack.txt`
    with the link. Post only if the user approves and Slack is connected.
 
@@ -89,12 +98,23 @@ Follow `references/pilot.md`:
 
 ### C · Catalog and KEDB maintenance
 
-When a detector needs a new code, a meaning changed, or a flow version moved nodes:
-- edit `docs/monitoring/*.yaml` following the append-only rules (`method.md` §2);
-- bump the catalog version;
-- open a PR in maria-voice (`[MAR-XXXX] …`, English, no Claude attribution).
+Everything goes through `scripts/collectors/monitor_store.py`:
+- **First use on a machine**: `init`, then `import-yaml` (seed from maria-voice
+  `docs/monitoring/`). It is idempotent.
+- **A new code**: `similar` → `propose` → the user runs `approve` (or `merge` / `reject`).
+  Approving allocates `L<n>-<DOMAIN>-<NNN>` atomically and bumps the catalog minor version.
+- **A change of meaning**: never edit in place. Propose the new code, approve it, then
+  `deprecate <old> --replaced-by <new>`.
+- **A code a deterministic detector will emit**: approve it in the store in the same change as
+  the detector (the detector's code is in git).
+- **Tasks**: `task-add`, `task-link`, `task-status`, and `tasks --code …` to see who owns what.
+- **History**: every `monitor.sh` pass is recorded (`record-run`); `trend --code …` gives the
+  code's count per pass, which is what regressions per version are measured on.
+- **Snapshot for review**: `export-yaml --out <dir>`, and diff it against the previous one.
 
-Detectors refuse codes that are not in the catalog.
+Detectors refuse codes that are not in the catalog. Today the store is one local file; it
+is designed to be copied to miniomni or loaded into Postgres unchanged when the monitor
+becomes shared.
 
 ## Finish
 

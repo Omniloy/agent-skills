@@ -2,7 +2,7 @@
 
 Everything here is read-only. The only writes this skill may do are:
 - a Jira task or comment, when the user asks for it;
-- a PR to `docs/monitoring/` (catalog, KEDB, tasks);
+- writes to `monitor.sqlite` (proposals, KEDB decisions, task links, run history);
 - a Slack post, only with explicit approval.
 
 ## 1. Which code is running where

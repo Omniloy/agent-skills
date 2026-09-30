@@ -232,13 +232,22 @@ def load_tasks(path: str = TASKS_PATH) -> Dict[str, List[dict]]:
     ¿queda algún accionable sin tarea y sin decisión? Sin esto hay que repasar el
     informe a mano y fiarse de la memoria.
     """
-    try:
-        import yaml
+    import monitor_store
 
-        with open(path) as handle:
-            raw = yaml.safe_load(handle) or {}
-    except (OSError, ImportError):
-        return {}
+    if path == TASKS_PATH and monitor_store.exists():
+        con = monitor_store.connect()
+        try:
+            raw = {"tasks": monitor_store.load_tasks(con)}
+        finally:
+            con.close()
+    else:
+        try:
+            import yaml
+
+            with open(path) as handle:
+                raw = yaml.safe_load(handle) or {}
+        except (OSError, ImportError):
+            return {}
     by_code: Dict[str, List[dict]] = {}
     for task in raw.get("tasks") or []:
         if task.get("status") == "done":
@@ -271,7 +280,17 @@ def load_kedb(path: str = KEDB_PATH) -> List[dict]:
 
     Absent file = no decisions yet, which is a normal state and not an error:
     the KEDB fills up as cases get reviewed one by one.
+
+    The shared store (monitor.sqlite) wins over the YAML when it exists.
     """
+    import monitor_store
+
+    if path == KEDB_PATH and monitor_store.exists():
+        con = monitor_store.connect()
+        try:
+            return monitor_store.load_kedb(con)
+        finally:
+            con.close()
     try:
         import yaml
 

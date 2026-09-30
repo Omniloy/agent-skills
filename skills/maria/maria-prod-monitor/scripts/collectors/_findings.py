@@ -28,8 +28,18 @@ class Catalog:
     """`catalog.yaml`, indexed by code id."""
 
     def __init__(self, path: str = CATALOG_PATH) -> None:
-        with open(path) as handle:
-            raw = yaml.safe_load(handle)
+        import monitor_store
+
+        if path == CATALOG_PATH and monitor_store.exists():
+            # The shared store is the source of truth once it exists; the YAML is its seed.
+            con = monitor_store.connect()
+            try:
+                raw = monitor_store.load_catalog(con)
+            finally:
+                con.close()
+        else:
+            with open(path) as handle:
+                raw = yaml.safe_load(handle)
         self.version: str = raw["version"]
         self.codes: Dict[str, dict] = {c["id"]: c for c in raw["codes"]}
 
@@ -38,8 +48,8 @@ class Catalog:
             return self.codes[code]
         except KeyError:
             raise KeyError(
-                f"{code} is not in catalog.yaml. Add it there (append-only) "
-                "before a detector emits it."
+                f"{code} is not in the catalog. Propose it (monitor_store.py propose) "
+                "and have it approved before a detector emits it."
             ) from None
 
     def of_layer(self, layer: str) -> List[dict]:

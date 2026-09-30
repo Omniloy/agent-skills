@@ -81,5 +81,14 @@ echo "== 7/7 · el aviso"
 python3 "$HERE/collectors/notify.py" "$OUT/out/findings.json" --review "$OUT/out/auth.json" \
   "${L3_ARG[@]}" --out "$OUT/slack.txt" > /dev/null
 echo "   escrito: $OUT/slack.txt"
+
+echo "== 8/8 · el historial compartido (monitor.sqlite)"
+if python3 -c "import sys; sys.path.insert(0, '$HERE/collectors'); import monitor_store; sys.exit(0 if monitor_store.exists() else 1)"; then
+  SINCE=$(python3 -c "import datetime as d; u=d.datetime.strptime('$UNTIL','%Y-%m-%dT%H:%M:%SZ'); print((u-d.timedelta(hours=float('$HOURS'))).strftime('%Y-%m-%dT%H:%M:%SZ'))")
+  python3 "$HERE/collectors/monitor_store.py" record-run --findings "$OUT/out/findings.json" \
+    --env "$ENV" --since "$SINCE" --until "$UNTIL" --by "${MONITOR_USER:-$USER}"
+else
+  echo "   (sin monitor.sqlite: la pasada no queda en el historial; ver monitor_store.py init / import-yaml)"
+fi
 echo
 echo "Listo. Publicar $OUT/parte.html como artifact y pegar su enlace en el aviso."
