@@ -293,6 +293,9 @@ translation. Translations can be generated with core-service
   you found genuinely depends on the missing detail (San Roque v20).
 - Deep heading hierarchies in the source document shrink the block but break answers:
   `get_node_content` does not return a subtree.
+- To prepare or re-ingest the customer's document, use the `kb-doc-restructure` skill: it
+  restructures it for PageIndex and refuses the result unless it passes a faithfulness audit
+  and a grounded eval against the live agent.
 
 ## 12. Caches and versioning
 
