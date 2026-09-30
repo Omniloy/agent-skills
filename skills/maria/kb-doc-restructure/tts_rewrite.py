@@ -11,7 +11,8 @@ storage (MAR-1141), so nothing is lost.
 Public helpers (all pure + unit-testable):
 
     phone_to_words("928353535")     -> "nueve dos ocho treinta y cinco treinta y cinco treinta y cinco"
-    phone_to_words("+34928353535")  -> "más treinta y cuatro, nueve dos ocho treinta y cinco treinta y cinco treinta y cinco"
+    phone_to_words("+34928353535")  -> "más treinta y cuatro, nueve dos ocho treinta y cinco
+                                        treinta y cinco treinta y cinco"
     email_to_words("john.doe@acme.com")  -> "john punto doe arroba acme punto com"
     url_to_words("www.acme.com/mi_pagina")
         -> "doble uve doble uve doble uve punto acme punto com barra mi barra baja pagina"
