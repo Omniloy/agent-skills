@@ -6,7 +6,7 @@ A small, battle-tested set of **[Claude Code](https://claude.com/claude-code) sk
 
 ## How the skills are organized
 
-The skills live in three tiers under [`skills/`](skills/), by their role in the delivery lifecycle:
+The skills live in four tiers under [`skills/`](skills/), by their role in the delivery lifecycle:
 
 ```
 skills/
@@ -22,9 +22,14 @@ skills/
     create-jira-work-items   file the team's Feature + Dev + Verification triad in Jira
     prd-to-issues            turn a PRD into GitHub Epics + sub-issues
     epic-loop                build a whole backlog Epic-by-Epic, autonomously
+  maria/     ← MarIA voice product work (customer workflows)
+    maria-workflow-builder   create / harden / fix a customer voice workflow + its regression suite
+    maria-workflow-evals     turn a workflow and its suite into voice evals on the evaluation platform
+    maria-prod-monitor       triage production calls by layer, catch regressions, watch a pilot
+    kb-doc-restructure       turn a customer FAQ document into a faithful, retrievable PageIndex Markdown
 ```
 
-**`core/` is the must-have set for any developer.** `test/` you add when you own verification (`agent-eval-api` only if you run agent evals). `backlog/` is for whoever plans or drives the project.
+**`core/` is the must-have set for any developer.** `test/` you add when you own verification (`agent-eval-api` only if you run agent evals). `backlog/` is for whoever plans or drives the project. `maria/` is for whoever builds or maintains customer voice workflows in maria-voice.
 
 ## The single-ticket flow (the everyday path)
 
@@ -80,6 +85,10 @@ skills/
 | backlog | **[`create-jira-work-items`](skills/backlog/create-jira-work-items/)** | Files the team's **mandatory Jira structure** for any new work: a **Feature** (pinned to an existing Epic) + a linked **Dev task** (`Tarea`) + an **independent Verification** (assigned to someone other than the dev), children linked with `Relates` (not sub-tasks). Resolves site/project/epics/people at runtime, checks for duplicates, drafts everything for approval before creating, then creates Feature → Dev → Verification in order. The Jira intake standard a lone `createJiraIssue` would violate. | `/create-jira-work-items` |
 | backlog | **[`prd-to-issues`](skills/backlog/prd-to-issues/)** | Reads a PRD, authors a structured `manifest.json`, renders a **visual plan** for human approval, then creates the Milestones + Epics + sub-issues + labels + **native sub-issue links** on GitHub via `gh` (idempotent). Every sub-issue carries a **Functional** and **Technical** section + acceptance criteria. | `/prd-to-issues` |
 | backlog | **[`epic-loop`](skills/backlog/epic-loop/)** | Orchestrates an autonomous, Epic-by-Epic build on the **standard issue structure** (Milestone → Epic → sub-issues). Delegates each Epic's code to a subagent, opens one PR, drives the review-bot/CI gate to green (via `/review-pr`), merges, and **keeps the backlog truthful** (closes sub-issues, ticks the Epic task-list, closes the Epic, advances the Milestone). Includes `scripts/backlog.py` (`epics` / `next` / **`audit`** / `review-status`). | `/epic-loop` |
+| maria | **[`maria-workflow-builder`](skills/maria/maria-workflow-builder/)** | Creates a customer's voice **workflow** (`conversation_flow`) from instructions and use cases, hardens an existing one for production, or fixes one from QA/pilot feedback. Works in a **sandbox clone** with every change a new version, backend reconnaissance first, a booking+FAQ blueprint and an outcome matrix per node, a static **lint** built from real incidents, an integration **regression suite** that names a test per edge and verifies against the backend, a **readiness checklist**, and **promotion SQL** rehearsed and rolled back in a throwaway Postgres. Distilled from the San Roque production pilots. | `/maria-workflow-builder` |
+| maria | **[`maria-workflow-evals`](skills/maria/maria-workflow-evals/)** | From a workflow and its regression suite, designs the **voice evals** only a real call can verify (dictated data, silences, turn-taking, the happy paths, globals, languages), writes the declarative scenarios module, bootstraps it idempotently on the Agent Evaluator platform, runs a small batch, triages persona → judge → agent (re-evaluating instead of repeating calls), keeps KNOWNFAIL evidence and detects drift with an offline coverage script. Composes `agent-eval-api`. | `/maria-workflow-evals` |
+| maria | **[`maria-prod-monitor`](skills/maria/maria-prod-monitor/)** | Read-only production monitor: pulls logs and calls for a window, runs deterministic **L1/L2** detectors against a versioned error-code catalog, queues calls for an **L3** semantic judge, and produces a case-by-case triage sheet (each case ends in Jira or the known-errors DB) plus a drafted alert. Its shared memory (codes and proposals, decisions, code ↔ Jira links, run history) is one SQLite store where sessions propose codes and a person approves them, so concurrent triage cannot collide; also live-watches a customer's **pilot** window after activation. Slack and Jira only with explicit approval. | `/maria-prod-monitor` |
+| maria | **[`kb-doc-restructure`](skills/maria/kb-doc-restructure/)** | Turns a customer's FAQ/knowledge document (docx, pdf, txt) into structured Markdown for the PageIndex knowledge base, with headers mapping to node depth. Enforces a two-layer faithfulness audit (nothing lost, nothing invented, hard-data diff incl. TTS-baked phones/emails/URLs) and a grounded eval against the live agent, with questions drawn from the ORIGINAL document, before the file is accepted. | `/kb-doc-restructure` |
 | — | **`loop`** *(built-in)* | `/loop [interval] <prompt>` — schedules a recurring or **self-paced** prompt. In dynamic mode it runs the task now, then uses `ScheduleWakeup` to re-fire (short while polling a review, long while a background agent works). This is what lets `ship`, `review-pr` (loop mode), and `epic-loop` run autonomously. Built into Claude Code; documented here for completeness. | `/loop` |
 
 ## The issue structure (the contract)
@@ -123,7 +132,7 @@ Claude Code loads skills from `~/.claude/skills/` (user-level) or `.claude/skill
 ```bash
 git clone git@github.com:Omniloy/agent-skills ~/omniloy/agent-skills
 ~/omniloy/agent-skills/install.sh
-# then in Claude Code:  /ship   /review-pr   /visual-recap   /release-title-changelog   /live-testing-plan   /create-jira-work-items   /prd-to-issues   /agent-eval-api   /epic-loop
+# then in Claude Code:  /ship   /review-pr   /visual-recap   /release-title-changelog   /live-testing-plan   /create-jira-work-items   /prd-to-issues   /agent-eval-api   /epic-loop   /maria-workflow-builder   /maria-workflow-evals   /maria-prod-monitor   /kb-doc-restructure
 ```
 
 **Updating is just `git pull`.** The links point at the clone, so a changed skill is live on the next Claude Code session. `install.sh` also installs `post-merge` / `post-rewrite` git hooks that re-run it after every pull (merge or rebase), so **new** skills get linked and renamed or deleted ones get unlinked without anyone remembering.
@@ -152,6 +161,9 @@ What it does and does not touch:
 - For `ship`, `live-testing-plan`, and `create-jira-work-items`: the **Atlassian MCP** connector connected (`getAccessibleAtlassianResources`, `getJiraIssue`, `createJiraIssue`, `createIssueLink`, etc.) — used to fetch/create issues, linked issues, comments, and optionally post a wrap-up comment.
 - For `live-testing-plan` evals mode: the **Omniloy `agent-eval-api`** skill installed and reachable — `live-testing-plan` only produces the spec; `agent-eval-api` executes it.
 - For `visual-recap` (and `ship`'s plan/recap): the **Agent-Native Plan** MCP connector (`plan`) connected.
+- For `maria-workflow-evals`: the same checkout, with `EVALS_USER_NAME`/`EVALS_PASSWORD` in maria-voice's `.env`, and the `agent-eval-api` skill.
+- For `maria-prod-monitor`: the same checkouts, Argo credentials in `~/.config/maria-monitor/argo.env` (`ARGO_USR`/`ARGO_PASS`), optionally `az` for Log Analytics.
+- For `maria-workflow-builder`: a maria-voice checkout with `maria-core-service` next to it (its `.env` holds the Supabase keys the scripts read), Python 3, `docker` for `validate_promotion.py`, and a core-service reachable per environment you write to (`MARIA_CORE_URL_<ENV>`).
 - For `ship`: all of the above together, plus a **Greptile** review bot on the repo. Run it under **`/loop`** (`/loop /ship <ticket>`) so the Act-2 gate can self-pace.
 
 ## Worked example — SonIA
